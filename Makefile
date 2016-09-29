@@ -1,12 +1,12 @@
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
+# contributor license agreements.	See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
 # The ASF licenses this file to You under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
+# the License.	You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#		 http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,32 +19,26 @@
 
 BASE_VERSION=0.1.0
 VERSION=$(BASE_VERSION)-incubating
-
-# Grab the commit id, or provide a default so we can continue
-COMMIT=$(shell git rev-parse --short=12 --verify HEAD 2> /dev/null)
-ifeq (,$(COMMIT))
-$(info WARN: Pure source repository without Git, so using default commit id!)
-COMMIT="000000000000"
-endif
-
+COMMIT=$(shell git rev-parse --short=12 --verify HEAD)
 ifeq (, $(findstring dev, $(VERSION)))
 IS_SNAPSHOT?=false
 else
 IS_SNAPSHOT?=true
 SNAPSHOT:=-SNAPSHOT
 endif
-SBT=sbt/sbt
 
 APACHE_SPARK_VERSION?=1.6.0
-IMAGE?=jupyter/pyspark-notebook:8dfd60b729bf
+SCALA_VERSION?=2.10
+IMAGE?=jupyter/all-spark-notebook:07a7c4d6d447
 EXAMPLE_IMAGE?=apache/toree-examples
-GPG?=$(shell which gpg)
+SYSTEM_TEST_IMAGE?=apache/toree-systemtest
+GPG?=/usr/local/bin/gpg
 GPG_PASSWORD?=
 BINDER_IMAGE?=apache/toree-binder
 DOCKER_WORKDIR?=/srv/toree
 DOCKER_ARGS?=
 define DOCKER
-docker run -it --rm \
+docker run -t --rm \
 	--workdir $(DOCKER_WORKDIR) \
 	-e PYTHONPATH='/srv/toree' \
 	-v `pwd`:/srv/toree $(DOCKER_ARGS)
@@ -66,14 +60,14 @@ ENV_OPTS:=APACHE_SPARK_VERSION=$(APACHE_SPARK_VERSION) VERSION=$(VERSION) IS_SNA
 ASSEMBLY_JAR:=toree-assembly-$(VERSION)$(SNAPSHOT).jar
 
 help:
-	@echo '      audit - run audit tools against the source code'
-	@echo '      clean - clean build files'
-	@echo '        dev - starts ipython'
-	@echo '       dist - build a directory with contents to package'
-	@echo '      build - builds assembly'
-	@echo '       test - run all units'
-	@echo '    release - creates packaged distribution'
-	@echo '    jupyter - starts a Jupyter Notebook with Toree installed'
+	@echo '			audit - run audit tools against the source code'
+	@echo '			clean - clean build files'
+	@echo '				dev - starts ipython'
+	@echo '			 dist - build a directory with contents to package'
+	@echo '			build - builds assembly'
+	@echo '			 test - run all units'
+	@echo '		release - creates packaged distribution'
+	@echo '		jupyter - starts a Jupyter Notebook with Toree installed'
 
 build-info:
 	@echo '$(ENV_OPTS) $(VERSION)'
@@ -83,34 +77,62 @@ clean-dist:
 
 clean: VM_WORKDIR=/src/toree-kernel
 clean: clean-dist
-	$(call RUN,$(ENV_OPTS) $(SBT) clean)
+	$(call RUN,$(ENV_OPTS) sbt clean)
 	rm -r `find . -name target -type d`
 
 .example-image: EXTRA_CMD?=printf "deb http://cran.rstudio.com/bin/linux/debian jessie-cran3/" >> /etc/apt/sources.list; apt-key adv --keyserver keys.gnupg.net --recv-key 381BA480; apt-get update; pip install jupyter_declarativewidgets==0.4.4; jupyter declarativewidgets install --user; jupyter declarativewidgets activate; pip install jupyter_dashboards; jupyter dashboards install --user; jupyter dashboards activate; apt-get update; apt-get install --yes curl; curl --silent --location https://deb.nodesource.com/setup_0.12 | sudo bash -; apt-get install --yes nodejs r-base r-base-dev; npm install -g bower;
 .example-image:
 	@-docker rm -f examples_image
-	@docker run -it --user root --name examples_image \
+	@docker run -t --user root --name examples_image \
 		$(IMAGE) bash -c '$(EXTRA_CMD)'
 	@docker commit examples_image $(EXAMPLE_IMAGE)
 	@-docker rm -f examples_image
+	touch $@
+
+.system-test-image:
+	@-docker rm -f system_test_image
+	@docker run -t --user root --name system_test_image \
+		$(IMAGE) bash -c "cd /tmp && \
+			wget http://apache.claz.org/spark/spark-$(APACHE_SPARK_VERSION)/spark-$(APACHE_SPARK_VERSION)-bin-hadoop2.6.tgz && \
+			tar xzf spark-$(APACHE_SPARK_VERSION)-bin-hadoop2.6.tgz -C /usr/local && \
+			rm spark-$(APACHE_SPARK_VERSION)-bin-hadoop2.6.tgz && \
+			cd /usr/local && \
+			rm spark && \
+			ln -s spark-$(APACHE_SPARK_VERSION)-bin-hadoop2.6 spark && \
+			echo /usr/local/spark/RELEASE && \
+			\
+			echo \"===> add webupd8 repository...\"	&& \
+			echo \"deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main\" | tee /etc/apt/sources.list.d/webupd8team-java.list	&& \
+			echo \"deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main\" | tee -a /etc/apt/sources.list.d/webupd8team-java.list	&& \
+			apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886	&& \
+			apt-get update && \
+			\
+			echo \"===> install Java\"	&& \
+			echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections	&& \
+			echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections	&& \
+			DEBIAN_FRONTEND=noninteractive	apt-get install -y --force-yes oracle-java8-installer oracle-java8-set-default && \
+			apt-get clean && \
+			update-java-alternatives -s java-8-oracle"
+	@docker commit system_test_image $(SYSTEM_TEST_IMAGE)
+	@-docker rm -f system_test_image
 	touch $@
 
 .binder-image:
 	@docker build --rm -t $(BINDER_IMAGE) .
 
 dev-binder: .binder-image
-	@docker run --rm -it -p 8888:8888  \
+	@docker run --rm -t -p 8888:8888	\
 		-v `pwd`:/home/main/notebooks \
 		--workdir /home/main/notebooks $(BINDER_IMAGE) \
 		/home/main/start-notebook.sh --ip=0.0.0.0
 
-target/scala-2.10/$(ASSEMBLY_JAR): VM_WORKDIR=/src/toree-kernel
-target/scala-2.10/$(ASSEMBLY_JAR): ${shell find ./*/src/main/**/*}
-target/scala-2.10/$(ASSEMBLY_JAR): ${shell find ./*/build.sbt}
-target/scala-2.10/$(ASSEMBLY_JAR): dist/toree-legal project/build.properties build.sbt project/common.scala project/plugins.sbt
-	$(call RUN,$(ENV_OPTS) $(SBT) toree/assembly)
+target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR): VM_WORKDIR=/src/toree-kernel
+target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR): ${shell find ./*/src/main/**/*}
+target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR): ${shell find ./*/build.sbt}
+target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR): dist/toree-legal project/build.properties build.sbt project/common.scala project/plugins.sbt
+	$(call RUN,$(ENV_OPTS) sbt toree/assembly)
 
-build: target/scala-2.10/$(ASSEMBLY_JAR)
+build: target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR)
 
 dev: DOCKER_WORKDIR=/srv/toree/etc/examples/notebooks
 dev: SUSPEND=n
@@ -120,20 +142,20 @@ dev: .example-image dist
 		-e SPARK_OPTS="--master=local[4] --driver-java-options=-agentlib:jdwp=transport=dt_socket,server=y,suspend=$(SUSPEND),address=5005" \
 		-v `pwd`/etc/kernel.json:/usr/local/share/jupyter/kernels/toree/kernel.json \
 		-p $(DEBUG_PORT):5005 -p 8888:8888 \
-		--user=root  $(EXAMPLE_IMAGE) \
+		--user=root	$(EXAMPLE_IMAGE) \
 		bash -c "cp -r /srv/toree/dist/toree/* /usr/local/share/jupyter/kernels/toree/. \
 			&& jupyter notebook --ip=* --no-browser"
 
 test: VM_WORKDIR=/src/toree-kernel
 test:
-	$(call RUN,$(ENV_OPTS) JAVA_OPTS="-Xmx4096M" $(SBT) compile test)
+	$(call RUN,$(ENV_OPTS) JAVA_OPTS="-Xmx4096M" sbt compile test)
 
 sbt-%:
-	$(call RUN,$(ENV_OPTS) $(SBT) $(subst sbt-,,$@) )
+	$(call RUN,$(ENV_OPTS) sbt $(subst sbt-,,$@) )
 
-dist/toree/lib: target/scala-2.10/$(ASSEMBLY_JAR)
+dist/toree/lib: target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR)
 	@mkdir -p dist/toree/lib
-	@cp target/scala-2.10/$(ASSEMBLY_JAR) dist/toree/lib/.
+	@cp target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR) dist/toree/lib/.
 
 dist/toree/bin: ${shell find ./etc/bin/*}
 	@mkdir -p dist/toree/bin
@@ -147,13 +169,13 @@ dist/toree/VERSION:
 dist/toree-legal/LICENSE: LICENSE etc/legal/LICENSE_extras
 	@mkdir -p dist/toree-legal
 	@cat LICENSE > dist/toree-legal/LICENSE
-	@printf "\n" >> dist/toree-legal/LICENSE
+	@echo '\n' >> dist/toree-legal/LICENSE
 	@cat etc/legal/LICENSE_extras >> dist/toree-legal/LICENSE
 
 dist/toree-legal/NOTICE: NOTICE etc/legal/NOTICE_extras
 	@mkdir -p dist/toree-legal
 	@cat NOTICE > dist/toree-legal/NOTICE
-	@printf "\n" >> dist/toree-legal/NOTICE
+	@echo '\n' >> dist/toree-legal/NOTICE
 	@cat etc/legal/NOTICE_extras >> dist/toree-legal/NOTICE
 
 dist/toree-legal/DISCLAIMER:
@@ -179,50 +201,37 @@ endef
 export JUPYTER_COMMAND
 jupyter: DOCKER_WORKDIR=/srv/toree/dist/toree-pip
 jupyter: .example-image pip-release
-	@$(DOCKER) -p 8888:8888  -e SPARK_OPTS="--master=local[4]" --user=root  $(EXAMPLE_IMAGE) bash -c "$$JUPYTER_COMMAND"
-
-export JUPYTER_COMMAND
-test-release:  env-PIP_RELEASE_URL .example-image
-	@$(DOCKER) -p 8888:8888  -e SPARK_OPTS="--master=local[4]" --user=root  $(EXAMPLE_IMAGE) \
-		bash -c "pip install $(PIP_RELEASE_URL) && \
-    jupyter toree install --interpreters=PySpark,SQL,Scala,SparkR && \
-    cd /srv/toree/etc/examples/notebooks && \
-    jupyter notebook --ip=* --no-browser"
-
-env-%:
-	@if [ "${${*}}" = "" ]; then \
-		echo "Environment variable $* not set"; \
-		exit 1; \
-	fi
+	@$(DOCKER) -p 8888:8888	-e SPARK_OPTS="--master=local[4]" --user=root	$(EXAMPLE_IMAGE) bash -c "$$JUPYTER_COMMAND"
 
 ################################################################################
 # System Tests Using Jupyter Kernel Test (https://github.com/jupyter/jupyter_kernel_test)
 ################################################################################
-system-test: pip-release
+system-test: pip-release .system-test-image
 	@echo '-- Running jupyter kernel tests'
-	@docker run --rm -ti \
+	@docker run -t --rm \
 		--name jupyter_kernel_tests \
 		-v `pwd`/dist/toree-pip:/srv/toree-pip \
 		-v `pwd`/test_toree.py:/srv/test_toree.py \
 		-v `pwd`/scala-interpreter/src/test/resources:/srv/system-test-resources \
 		--user=root \
-		$(IMAGE) \
+		$(SYSTEM_TEST_IMAGE) \
 		bash -c "(cd /srv/system-test-resources && python -m http.server 8000 &) && \
-		pip install /srv/toree-pip/apache-toree*.tar.gz && jupyter toree install --interpreters=PySpark,Scala && \
+		rm -rf /home/jovyan/.local/share/jupyter/kernels/apache_toree_scala/ && \
+		pip install /srv/toree-pip/toree*.tar.gz && jupyter toree install --interpreters=PySpark,Scala,SparkR && \
 		pip install nose jupyter_kernel_test && python /srv/test_toree.py"
+
 
 ################################################################################
 # Jars
 ################################################################################
 publish-jars:
-	@$(if $(GPG),,$(error GPG executable is missing from path!))
-	@$(ENV_OPTS) GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) $(SBT) publish-signed
+	@$(ENV_OPTS) GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) sbt publish-signed
 
 ################################################################################
 # PIP PACKAGE
 ################################################################################
-dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz: DOCKER_WORKDIR=/srv/toree/dist/toree-pip
-dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz: dist/toree
+dist/toree-pip/toree-$(BASE_VERSION).tar.gz: DOCKER_WORKDIR=/srv/toree/dist/toree-pip
+dist/toree-pip/toree-$(BASE_VERSION).tar.gz: dist/toree
 	@mkdir -p dist/toree-pip
 	@cp -r dist/toree dist/toree-pip
 	@cp dist/toree/LICENSE dist/toree-pip/LICENSE
@@ -234,16 +243,15 @@ dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz: dist/toree
 	@cp -rf etc/pip_install/* dist/toree-pip/.
 	@$(GEN_PIP_PACKAGE_INFO)
 	@$(DOCKER) --user=root $(IMAGE) python setup.py sdist --dist-dir=.
-	@$(DOCKER) -p 8888:8888 --user=root  $(IMAGE) bash -c	'pip install apache-toree-$(BASE_VERSION).tar.gz && jupyter toree install'
-	-@(cd dist/toree-pip; find . -not -name 'apache-toree-$(BASE_VERSION).tar.gz' -maxdepth 1 | xargs rm -r )
+	@$(DOCKER) -p 8888:8888 --user=root	$(IMAGE) bash -c	'pip install toree-$(BASE_VERSION).tar.gz && jupyter toree install'
+#	-@(cd dist/toree-pip; find . -not -name 'toree-$(VERSION).tar.gz' -maxdepth 1 | xargs rm -r )
 
-pip-release: dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz
+pip-release: dist/toree-pip/toree-$(BASE_VERSION).tar.gz
 
-dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.md5 dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.asc dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.sha: dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz
-	@$(if $(GPG),,$(error GPG executable is missing from path!))
-	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz
+dist/toree-pip/toree-$(BASE_VERSION).tar.gz.md5 dist/toree-pip/toree-$(BASE_VERSION).tar.gz.asc dist/toree-pip/toree-$(BASE_VERSION).tar.gz.sha: dist/toree-pip/toree-$(BASE_VERSION).tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-pip/toree-$(BASE_VERSION).tar.gz
 
-sign-pip: dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.md5 dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.asc dist/toree-pip/apache-toree-$(BASE_VERSION).tar.gz.sha
+sign-pip: dist/toree-pip/toree-$(BASE_VERSION).tar.gz.md5 dist/toree-pip/toree-$(BASE_VERSION).tar.gz.asc dist/toree-pip/toree-$(BASE_VERSION).tar.gz.sha
 
 publish-pip: DOCKER_WORKDIR=/srv/toree/dist/toree-pip
 publish-pip: PYPI_REPO?=https://pypi.python.org/pypi
@@ -253,41 +261,37 @@ publish-pip: PYPIRC=printf "[distutils]\nindex-servers =\n\tpypi\n\n[pypi]\nrepo
 publish-pip: sign-pip
 	@$(DOCKER) $(IMAGE) bash -c '$(PYPIRC) pip install twine && \
 		python setup.py register -r $(PYPI_REPO) && \
-		twine upload -r pypi apache-toree-$(BASE_VERSION).tar.gz apache-toree-$(BASE_VERSION).tar.gz.asc'
+		twine upload -r pypi toree-$(BASE_VERSION).tar.gz toree-$(BASE_VERSION).tar.gz.asc'
 
 ################################################################################
 # BIN PACKAGE
 ################################################################################
-dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz: dist/toree
+dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz: dist/toree
 	@mkdir -p dist/toree-bin
-	@ln -fs dist/toree apache-toree
-	@tar -cvzhf dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz apache-toree
-	@-rm apache-toree
+	@(cd dist; tar -cvzf toree-bin/toree-$(VERSION)-binary-release.tar.gz toree)
 
-bin-release: dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz
+bin-release: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
 
-dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.sha: dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz
-	@$(if $(GPG),,$(error GPG executable is missing from path!))
-	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz
+dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.sha: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz
 
-sign-bin: dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/apache-toree-$(VERSION)-binary-release.tar.gz.sha
+sign-bin: dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.md5 dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.asc dist/toree-bin/toree-$(VERSION)-binary-release.tar.gz.sha
 
 publish-bin:
 
 ################################################################################
 # SRC PACKAGE
 ################################################################################
-dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz:
+dist/toree-src/toree-$(VERSION)-source-release.tar.gz:
 	@mkdir -p dist/toree-src
-	@tar -X 'etc/.src-release-ignore' -cvf dist/toree-src/apache-toree-$(VERSION)-source-release.tar .
-	@gzip dist/toree-src/apache-toree-$(VERSION)-source-release.tar
+	@tar -X 'etc/.src-release-ignore' -cvzf dist/toree-src/toree-$(VERSION)-source-release.tar.gz .
 
-src-release: dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz
+src-release: dist/toree-src/toree-$(VERSION)-source-release.tar.gz
 
-dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.sha: dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz
-	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz
+dist/toree-src/toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/toree-$(VERSION)-source-release.tar.gz.sha: dist/toree-src/toree-$(VERSION)-source-release.tar.gz
+	@GPG_PASSWORD='$(GPG_PASSWORD)' GPG=$(GPG) etc/tools/./sign-file dist/toree-src/toree-$(VERSION)-source-release.tar.gz
 
-sign-src: dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/apache-toree-$(VERSION)-source-release.tar.gz.sha
+sign-src: dist/toree-src/toree-$(VERSION)-source-release.tar.gz.md5 dist/toree-src/toree-$(VERSION)-source-release.tar.gz.asc dist/toree-src/toree-$(VERSION)-source-release.tar.gz.sha
 
 publish-src:
 

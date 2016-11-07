@@ -22,14 +22,15 @@ import java.net.{URL, URLClassLoader}
 import java.nio.charset.Charset
 import java.util.concurrent.ExecutionException
 
-import com.typesafe.config.{ConfigFactory, Config}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.SparkContext
 import org.apache.spark.repl.{SparkIMain, SparkJLineCompletion}
 import org.apache.spark.sql.SQLContext
 import org.apache.toree.interpreter._
 import org.apache.toree.kernel.api.{KernelLike, KernelOptions}
-import org.apache.toree.utils.{MultiOutputStream, TaskManager}
+import org.apache.toree.utils.{MultiOutputStream, SparkUtils, TaskManager}
 import org.slf4j.LoggerFactory
+import org.apache.toree.kernel.BuildInfo
 
 import scala.annotation.tailrec
 import scala.concurrent.{Await, Future}
@@ -298,7 +299,7 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     val bindName = "sc"
 
     doQuietly {
-      logger.debug(s"Binding SparkContext into interpreter as $bindName")
+      logger.info(s"Binding SparkContext into interpreter as $bindName")
       interpret(s"""def ${bindName}: ${classOf[SparkContext].getName} = kernel.sparkContext""")
 
       // NOTE: This is needed because interpreter blows up after adding
@@ -333,4 +334,32 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   }
 
   override def classLoader: ClassLoader = _runtimeClassloader
+
+  /**
+    * Returns the language metadata for syntax highlighting
+    */
+  override def languageInfo = LanguageInfo("scala", BuildInfo.scalaVersion, fileExtension = Some(".scala"))
+}
+
+object ScalaInterpreter {
+
+  /**
+    * Utility method to ensure that a temporary directory for the REPL exists for testing purposes.
+    */
+  def ensureTemporaryFolder(): String = {
+    val outputDir = Option(System.getProperty("spark.repl.class.outputDir")).getOrElse({
+
+      val execUri = System.getenv("SPARK_EXECUTOR_URI")
+      val tmp = System.getProperty("java.io.tmpdir")
+      val rootDir = System.getProperty("spark.repl.classdir", tmp)
+      val outputDir: String = SparkUtils.createTempDir(rootDir).getAbsolutePath
+      System.setProperty("spark.repl.class.outputDir", outputDir)
+      if (execUri != null) {
+        System.setProperty("spark.executor.uri", execUri)
+      }
+      outputDir
+    })
+    outputDir
+  }
+
 }

@@ -101,12 +101,14 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
 
   override def init(kernel: KernelLike): Interpreter = {
     start()
-
     bindKernelVariable(kernel)
-    bindSparkContext()
-    bindSqlContext()
 
     this
+  }
+
+  override def postInit(): Unit = {
+         bindSqlContext()
+         bindSparkContext()
   }
 
   protected[scala] def buildClasspath(classLoader: ClassLoader): String = {

@@ -365,56 +365,33 @@ trait ScalaInterpreterSpecific { this: ScalaInterpreter =>
     }
   }
 
-  protected def interpretMapToResultAndExecuteInfo(
-    future: Future[(Results.Result, String)]
-  ): Future[(Results.Result, Either[ExecuteOutput, ExecuteFailure])] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    future map {
-      case (Results.Success, output)    => (Results.Success, Left(output))
-      case (Results.Incomplete, output) => (Results.Incomplete, Left(output))
-      case (Results.Aborted, output)    => (Results.Aborted, Right(null))
-      case (Results.Error, output)      =>
-        val x = sparkIMain.valueOfTerm(ExecutionExceptionName)
-        (
-          Results.Error,
-          Right(
-            interpretConstructExecuteError(
-              sparkIMain.valueOfTerm(ExecutionExceptionName),
-              output
-            )
-          )
+  protected def interpretConstructExecuteError(output: String) = {
+    sparkIMain.valueOfTerm(ExecutionExceptionName) match {
+      // Runtime error
+      case Some(e) =>
+        val ex = e.asInstanceOf[Throwable]
+        // Clear runtime error message
+        sparkIMain.directBind(
+          ExecutionExceptionName,
+          classOf[Throwable].getName,
+          null
         )
-    }
-  }
-
-  protected def interpretConstructExecuteError(
-    value: Option[AnyRef],
-    output: String
-  ) = value match {
-    // Runtime error
-    case Some(e) if e != null =>
-      val ex = e.asInstanceOf[Throwable]
-      // Clear runtime error message
-      sparkIMain.directBind(
-        ExecutionExceptionName,
-        classOf[Throwable].getName,
-        null
-      )
-      ExecuteError(
-        ex.getClass.getName,
-        ex.getLocalizedMessage,
-        ex.getStackTrace.map(_.toString).toList
-      )
-    // Compile time error, need to check internal reporter
-    case _ =>
-      if (sparkIMain.isReportingErrors)
-      // TODO: This wrapper is not needed when just getting compile
-      // error that we are not parsing... maybe have it be purely
-      // output and have the error check this?
         ExecuteError(
-          "Compile Error", output, List()
+          ex.getClass.getName,
+          ex.getLocalizedMessage,
+          ex.getStackTrace.map(_.toString).toList
         )
-      else
-        ExecuteError("Unknown", "Unable to retrieve error!", List())
+      // Compile time error, need to check internal reporter
+      case _ =>
+        if (sparkIMain.isReportingErrors)
+        // TODO: This wrapper is not needed when just getting compile
+        // error that we are not parsing... maybe have it be purely
+        // output and have the error check this?
+          ExecuteError(
+            "Compile Error", output, List()
+          )
+        else
+          ExecuteError("Unknown", "Unable to retrieve error!", List())
+    }
   }
 }

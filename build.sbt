@@ -75,6 +75,7 @@ testOptions in (ThisBuild, Test) += Tests.Argument("-oDF")
 resolvers in ThisBuild  ++= Seq(
   "Apache Snapshots" at "http://repository.apache.org/snapshots/",
   "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
+  "Jitpack" at "https://jitpack.io",
   "Cloudera repository" at "https://repository.cloudera.com/content/repositories/releases/"
 )
 updateOptions in ThisBuild := updateOptions.value.withCachedResolution(true)

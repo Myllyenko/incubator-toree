@@ -49,8 +49,8 @@ libraryDependencies += "net.sf.jopt-simple" % "jopt-simple" % "4.9" % "provided"
 libraryDependencies ++= Seq(
   // Used to find and download jars from Maven-based repositories
   "org.apache.ivy" % "ivy" % "2.0.0-rc2" % "provided", // Apache v2
-  "io.get-coursier" %% "coursier" % "1.0.0-M12", // Apache v2
-  "io.get-coursier" %% "coursier-cache" % "1.0.0-M12" // Apache v2
+  "io.get-coursier" %% "coursier" % "1.0.0-M14", // Apache v2
+  "io.get-coursier" %% "coursier-cache" % "1.0.0-M14" // Apache v2
 )
 
 // Brought in in order to simplify the reading of each project's ivy.xml file

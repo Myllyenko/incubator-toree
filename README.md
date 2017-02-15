@@ -67,10 +67,19 @@ Refer to your `Docker` setup for the ip address. The notebook will be at `http:/
 
 Install
 =======
-PIP packages are hosted on Apache dist. Currently we have a developer preview of 0.1.0.
+
+Dev snapshots of Toree are located at https://dist.apache.org/repos/dist/dev/incubator/toree. To install using one
+of those packages, you can use the following:
 
 ```
-pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.1.0/snapshots/toree-0.1.0.dev8.tar.gz
+pip install <PIP_RELEASE_URL>
+jupyter toree install
+```
+
+where `PIP_RELEASE_URL` is one of the `pip` packages. For example:
+
+```
+pip install https://dist.apache.org/repos/dist/dev/incubator/toree/0.2.0/snapshots/dev1/toree-pip/toree-0.2.0.dev1.tar.gz
 jupyter toree install
 ```
 
@@ -135,5 +144,4 @@ We are working on porting our documentation into Apache. For the time being, you
 [mail-list]: mailto:dev@toree.incubator.apache.org
 
 [master]: https://github.com/apache/incubator-toree
-[branch-0.1.4]: https://github.com/apache/incubator-toree/tree/branch-0.1.4
-[branch-0.1.3]: https://github.com/apache/incubator-toree/tree/branch-0.1.3
+[0.1.x]: https://github.com/apache/incubator-toree/tree/0.1.x

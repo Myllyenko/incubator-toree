@@ -14,13 +14,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License
  */
+fork in Test := true
+libraryDependencies ++= Dependencies.sparkAll.value
 
 //
 // TEST DEPENDENCIES
 //
-libraryDependencies ++=
-  Seq("org.spark-project.akka" %% "akka-testkit" % "2.3.4-spark" % "test", // MIT
-    "com.google.guava"  % "guava" % "11.0.2" % "provided",
-    "net.sf.jopt-simple" % "jopt-simple" % "4.9" % "provided")
-
+libraryDependencies += Dependencies.akkaTestkit % "test"
+libraryDependencies += Dependencies.joptSimple
 

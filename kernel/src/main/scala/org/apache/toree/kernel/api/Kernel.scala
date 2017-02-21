@@ -18,7 +18,9 @@
 package org.apache.toree.kernel.api
 
 import java.io.{InputStream, PrintStream}
-import java.util.concurrent.ConcurrentHashMap
+import java.net.URI
+import java.util.concurrent.{ConcurrentHashMap, TimeUnit, TimeoutException}
+import scala.collection.mutable
 import com.typesafe.config.Config
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SQLContext
@@ -34,14 +36,15 @@ import org.apache.toree.kernel.protocol.v5
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.kernel.protocol.v5.magic.MagicParser
 import org.apache.toree.kernel.protocol.v5.stream.KernelOutputStream
-import org.apache.toree.kernel.protocol.v5.{KMBuilder, KernelMessage}
+import org.apache.toree.kernel.protocol.v5.{KMBuilder, KernelMessage, MIMEType}
 import org.apache.toree.magic.MagicManager
 import org.apache.toree.plugins.PluginManager
-import org.apache.toree.utils.{KeyValuePairUtils, LogLike}
+import org.apache.toree.utils.LogLike
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
-import scala.util.{DynamicVariable, Try}
-import org.apache.toree.plugins.SparkReady
+import scala.util.DynamicVariable
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Future, Await}
 
 /**
  * Represents the main kernel API to be used for interaction.
@@ -59,6 +62,23 @@ class Kernel (
   val comm: CommManager,
   val pluginManager: PluginManager
 ) extends KernelLike with LogLike {
+
+  /**
+   * Jars that have been added to the kernel
+   */
+  private val jars = new mutable.ArrayBuffer[URI]()
+
+  override def addJars(uris: URI*): Unit = {
+    uris.foreach { uri =>
+      if (uri.getScheme != "file") {
+        throw new RuntimeException("Cannot add non-local jar: " + uri)
+      }
+    }
+
+    jars ++= uris
+    interpreter.addJars(uris.map(_.toURL):_*)
+    uris.foreach(uri => sparkContext.addJar(uri.getPath))
+  }
 
   /**
    * Represents the current input stream used by the kernel for the specific
@@ -86,11 +106,6 @@ class Kernel (
     new DynamicVariable[PrintStream](null)
   private val currentErrorKernelMessage =
     new DynamicVariable[KernelMessage](null)
-
-  private var _sparkContext:SparkContext = null;
-  private var _sparkConf:SparkConf = null;
-  def _javaSparkContext: JavaSparkContext = new JavaSparkContext(_sparkContext)
-  private var _sqlContext:SQLContext = null;
 
   /**
    * Represents magics available through the kernel.
@@ -343,31 +358,6 @@ class Kernel (
     someKernelMessage.get
   }
 
-  override def createSparkContext(conf: SparkConf): SparkContext = {
-    _sparkConf = createSparkConf(conf)
-    _sparkContext = initializeSparkContext(sparkConf)
-    _sqlContext = initializeSqlContext(_sparkContext)
-
-    val sparkMaster = _sparkConf.getOption("spark.master").getOrElse("not_set")
-    logger.info( s"Connecting to spark.master $sparkMaster")
-
-    // TODO: Convert to events
-    pluginManager.dependencyManager.add(_sparkConf)
-    pluginManager.dependencyManager.add(_sparkContext)
-    pluginManager.dependencyManager.add(_javaSparkContext)
-    pluginManager.dependencyManager.add(_sqlContext)
-
-    pluginManager.fireEvent(SparkReady)
-
-    _sparkContext
-  }
-
-  override def createSparkContext(
-    master: String
-  ): SparkContext = {
-    createSparkContext(new SparkConf().setMaster(master))
-  }
-
   // TODO: Think of a better way to test without exposing this
   protected[toree] def createSparkConf(conf: SparkConf) = {
 
@@ -435,8 +425,55 @@ class Kernel (
     interpreterManager.interpreters.get(name)
   }
 
-  override def sparkContext: SparkContext = _sparkContext
-  override def sparkConf: SparkConf = _sparkConf
-  override def javaSparkContext: JavaSparkContext = _javaSparkContext
-  override def sqlContext: SQLContext = _sqlContext
+  private lazy val defaultSparkConf: SparkConf = createSparkConf(new SparkConf())
+
+  override def sparkContext: SparkContext = {
+    defaultSparkConf.getOption("spark.master") match {
+      case Some(master) if !master.contains("local") =>
+        // when connecting to a remote cluster, the first call to getOrCreate
+        // may create a session and take a long time, so this starts a future
+        // to get the session. if it take longer than 100 ms, then print a
+        // message to the user that Spark is starting.
+        import scala.concurrent.ExecutionContext.Implicits.global
+        val sessionFuture = Future {
+          SparkContext.getOrCreate(defaultSparkConf)
+        }
+
+        try {
+          Await.result(sessionFuture, Duration(100, TimeUnit.MILLISECONDS))
+        } catch {
+          case timeout: TimeoutException =>
+            // getting the session is taking a long time, so assume that Spark
+            // is starting and print a message
+            display.content(
+              MIMEType.PlainText, "Waiting for a Spark session to start...")
+            Await.result(sessionFuture, Duration.Inf)
+        }
+
+      case _ =>
+        SparkContext.getOrCreate(defaultSparkConf)
+    }
+  }
+
+  override def sparkConf: SparkConf = sparkContext.getConf
+  override def javaSparkContext: JavaSparkContext = javaSparkContext(sparkContext)
+  override def sqlContext: SQLContext = sqlContext(sparkContext)
+
+  private val javaContexts = new mutable.WeakHashMap[SparkContext, JavaSparkContext]
+  private def javaSparkContext(sparkContext: SparkContext): JavaSparkContext = {
+    javaContexts.synchronized {
+      javaContexts.getOrElseUpdate(
+        sparkContext,
+        new JavaSparkContext(sparkContext))
+    }
+  }
+
+  private val sqlContexts = new mutable.WeakHashMap[SparkContext, SQLContext]
+  private def sqlContext(sparkContext: SparkContext): SQLContext = {
+    sqlContexts.synchronized {
+      sqlContexts.getOrElseUpdate(
+        sparkContext,
+        initializeSqlContext(sparkContext))
+    }
+  }
 }

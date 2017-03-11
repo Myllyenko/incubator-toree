@@ -103,13 +103,12 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     start()
     bindKernelVariable(kernel)
 
-    this
-  }
-
-  override def postInit(): Unit = {
+    // ensure bindings are defined before allowing user code to run
     bindSqlContext()
     bindSparkContext()
     defineImplicits()
+
+    this
   }
 
   protected[scala] def buildClasspath(classLoader: ClassLoader): String = {

@@ -28,3 +28,6 @@ addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.6.1")
 
 //  Used for signing jars published via `sbt publish-signed`
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
+
+// Provides the ability to generate dependency graphs
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")

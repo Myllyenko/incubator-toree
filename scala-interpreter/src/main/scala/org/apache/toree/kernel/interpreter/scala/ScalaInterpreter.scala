@@ -28,7 +28,7 @@ import org.apache.spark.repl.{SparkIMain, SparkJLineCompletion}
 import org.apache.spark.sql.SQLContext
 import org.apache.toree.interpreter._
 import org.apache.toree.kernel.api.{KernelLike, KernelOptions}
-import org.apache.toree.utils.{MultiOutputStream, SparkUtils, TaskManager}
+import org.apache.toree.utils.{SparkUtils, TaskManager}
 import org.slf4j.LoggerFactory
 import org.apache.toree.kernel.BuildInfo
 
@@ -52,7 +52,6 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   protected val lastResultOut = new ByteArrayOutputStream()
 
 
-  protected val multiOutputStream = MultiOutputStream(List(Console.out, lastResultOut))
   private[scala] var taskManager: TaskManager = _
 
   protected var settings: Settings = newSettings(interpreterArgs())
@@ -264,37 +263,6 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
         lastResultOut.reset()
         (result, output)
     }
-  }
-
-
-  override def start() = {
-    require(sparkIMain == null && taskManager == null)
-
-    taskManager = newTaskManager()
-
-    logger.debug("Initializing task manager")
-    taskManager.start()
-
-    sparkIMain =
-      newSparkIMain(settings, new JPrintWriter(multiOutputStream, true))
-
-
-    //logger.debug("Initializing interpreter")
-    //sparkIMain.initializeSynchronous()
-
-    logger.debug("Initializing completer")
-    jLineCompleter = new SparkJLineCompletion(sparkIMain)
-
-    sparkIMain.beQuietDuring {
-      //logger.info("Rerouting Console and System related input and output")
-      //updatePrintStreams(System.in, multiOutputStream, multiOutputStream)
-
-//   ADD IMPORTS generates too many classes, client is responsible for adding import
-      logger.debug("Adding org.apache.spark.SparkContext._ to imports")
-      sparkIMain.addImports("org.apache.spark.SparkContext._")
-    }
-
-    this
   }
 
   def bindSparkContext() = {

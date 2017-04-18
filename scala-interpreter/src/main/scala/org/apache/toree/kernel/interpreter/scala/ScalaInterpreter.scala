@@ -19,7 +19,6 @@ package org.apache.toree.kernel.interpreter.scala
 
 import java.io.ByteArrayOutputStream
 import java.net.{URL, URLClassLoader}
-import java.nio.charset.Charset
 import java.util.concurrent.{ExecutionException, TimeoutException, TimeUnit}
 import com.typesafe.config.{Config, ConfigFactory}
 import jupyter.Displayers
@@ -95,14 +94,18 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   override def init(kernel: KernelLike): Interpreter = {
     this._kernel = kernel
     start()
-    bindKernelVariable(kernel)
 
     // ensure bindings are defined before allowing user code to run
+    bindVariables()
+
+    this
+  }
+
+  protected def bindVariables(): Unit = {
+    bindKernelVariable(kernel)
     bindSqlContext()
     bindSparkContext()
     defineImplicits()
-
-    this
   }
 
   protected[scala] def buildClasspath(classLoader: ClassLoader): String = {

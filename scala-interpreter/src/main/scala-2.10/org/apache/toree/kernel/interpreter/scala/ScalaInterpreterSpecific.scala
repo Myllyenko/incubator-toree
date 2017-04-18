@@ -26,7 +26,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.repl.{SparkCommandLine, SparkIMain, SparkJLineCompletion}
 import org.apache.spark.sql.SQLContext
 import org.apache.toree.global.StreamState
-import org.apache.toree.interpreter._
+import org.apache.toree.interpreter.{ExecuteError, Interpreter}
 import org.apache.toree.interpreter.imports.printers.{WrapperConsole, WrapperSystem}
 import org.apache.toree.kernel.api.{KernelLike, KernelOptions}
 import org.apache.toree.utils.{MultiOutputStream, TaskManager}
@@ -40,6 +40,7 @@ import scala.tools.nsc.interpreter.{IR, InputStream, JPrintWriter, OutputStream}
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.{ClassPath, MergedClassPath}
 import scala.tools.nsc.{Global, Settings, io}
+import scala.tools.nsc.interpreter._
 import scala.util.{Try => UtilTry}
 
 /**
@@ -66,14 +67,14 @@ trait ScalaInterpreterSpecific { this: ScalaInterpreter =>
    * @param jars The list of jar locations
    */
   override def addJars(jars: URL*): Unit = {
-    // Enable Scala class support
-    reinitializeSymbols()
-
-    jars.foreach(_runtimeClassloader.addJar)
-    updateCompilerClassPath(jars : _*)
-
-    // Refresh all of our variables
+    sparkIMain.addUrlsToClassPath(jars:_*)
+    // the Scala interpreter will invalidate definitions for any package defined in
+    // the new Jars. This can easily include org.* and make the kernel inaccessible
+    // because it is bound using the previous package definition. To avoid problems,
+    // it is necessary to refresh variable definitions to use the new packages and
+    // to rebind the global definitions.
     refreshDefinitions()
+    bindVariables()
   }
 
   // TODO: Need to figure out a better way to compare the representation of

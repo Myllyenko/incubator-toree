@@ -20,7 +20,7 @@ package org.apache.toree.kernel.interpreter.scala
 import java.io.{ByteArrayOutputStream, PrintStream}
 import java.net.{URL, URLClassLoader}
 import java.nio.charset.Charset
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.{ExecutionException, TimeoutException, TimeUnit}
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.SparkContext
@@ -39,8 +39,13 @@ import scala.tools.nsc.interpreter.{IR, JPrintWriter, OutputStream}
 import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.{Settings, io}
 import scala.util.{Try => UtilTry}
+import scala.concurrent.duration.Duration
 
 class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends Interpreter with ScalaInterpreterSpecific {
+  protected var _kernel: KernelLike = _
+
+  protected def kernel: KernelLike = _kernel
+
   protected val logger = LoggerFactory.getLogger(this.getClass.getName)
 
   protected val _thisClassloader = this.getClass.getClassLoader
@@ -101,6 +106,7 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   }
 
   override def init(kernel: KernelLike): Interpreter = {
+    this._kernel = kernel
     start()
     bindKernelVariable(kernel)
 

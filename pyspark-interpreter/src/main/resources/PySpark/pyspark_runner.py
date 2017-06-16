@@ -17,7 +17,9 @@
 
 import sys, getopt, traceback, re, ast
 
+print("PYTHON::: Starting imports")
 from py4j.java_gateway import java_import, JavaGateway, GatewayClient
+print("PYTHON::: Py4J imported")
 from py4j.protocol import Py4JJavaError
 from pyspark.conf import SparkConf
 from pyspark.context import SparkContext
@@ -31,15 +33,17 @@ from pyspark.serializers import MarshalSerializer, PickleSerializer
 from time import sleep
 
 # for back compatibility
-from pyspark.sql import SQLContext, HiveContext, SchemaRDD, Row
+from pyspark.sql import SQLContext, DataFrame, Row
 
 client = GatewayClient(port=int(sys.argv[1]))
 sparkVersion = sys.argv[2]
 
-if re.match("^1\.[456]\..*$", sparkVersion):
+print("PYTHON:: Starting gateway")
+if re.match("^1\.[456]\..*$", sparkVersion) or re.match("^2\..*$", sparkVersion):
     gateway = JavaGateway(client, auto_convert=True)
 else:
     gateway = JavaGateway(client)
+print("PYTHON:: Gateway started")
 
 java_import(gateway.jvm, "org.apache.spark.SparkEnv")
 java_import(gateway.jvm, "org.apache.spark.SparkConf")
@@ -62,6 +66,8 @@ elif sparkVersion.startswith("1.3"):
 elif re.match("^1\.[456]\..*$", sparkVersion):
     java_import(gateway.jvm, "org.apache.spark.sql.*")
     java_import(gateway.jvm, "org.apache.spark.sql.hive.*")
+elif re.match("^2\..*$", sparkVersion):
+    java_import(gateway.jvm, "org.apache.spark.sql.*")
 
 java_import(gateway.jvm, "scala.Tuple2")
 

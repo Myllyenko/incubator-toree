@@ -27,8 +27,14 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.security.KernelSecurityManager
 import org.apache.toree.utils.LogLike
+import org.apache.toree.utils.SparkUtils
+
+import org.apache.spark.repl.Main
+
 import org.zeromq.ZMQ
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 class KernelBootstrap(config: Config) extends LogLike {
@@ -45,6 +51,8 @@ class KernelBootstrap(config: Config) extends LogLike {
   private var kernel: Kernel                    = _
 
   private var interpreters: Seq[Interpreter]    = Nil
+  private val rootDir                           = System.getProperty("spark.repl.classdir", System.getProperty("java.io.tmpdir"))
+  private val outputDir                         = SparkUtils.createTempDir(rootDir)
 
   /**
    * Initializes all kernel systems.
@@ -58,6 +66,13 @@ class KernelBootstrap(config: Config) extends LogLike {
     // E.G. System.setOut(customPrintStream) ... all new threads will have
     //      customPrintStream as their initial Console.out value
     //
+
+    // ENSURE THAT WE SET THE RIGHT SPARK PROPERTIES
+    val execUri = System.getenv("SPARK_EXECUTOR_URI")
+    System.setProperty("spark.repl.class.outputDir", outputDir.getAbsolutePath)
+    if (execUri != null) {
+      System.setProperty("spark.executor.uri", execUri)
+    }
 
     displayVersionInfo()
 

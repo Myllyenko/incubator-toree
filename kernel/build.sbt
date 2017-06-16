@@ -20,6 +20,7 @@
 //
 libraryDependencies ++=
   Seq("org.spark-project.akka" %% "akka-testkit" % "2.3.4-spark" % "test", // MIT
-    "com.google.guava"  % "guava" % "19.0")
+    "com.google.guava"  % "guava" % "11.0.2" % "provided",
+    "net.sf.jopt-simple" % "jopt-simple" % "4.9" % "provided")
 
 

@@ -17,7 +17,7 @@
 
 package org.apache.toree.kernel.api
 
-import java.io.{PrintStream, InputStream, OutputStream}
+import java.io.{InputStream, OutputStream, PrintStream}
 
 import com.typesafe.config.Config
 import org.apache.spark.api.java.JavaSparkContext

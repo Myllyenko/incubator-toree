@@ -32,7 +32,7 @@ object Common {
   private val gpgPassword               = Properties.envOrElse("GPG_PASSWORD","")
   private val buildOrganization         = "org.apache.toree"
   private val buildVersion              = if (snapshot) s"$versionNumber-SNAPSHOT" else versionNumber
-  private val buildScalaVersion         = "2.10.4"
+  private val buildScalaVersion         = "2.10.5"
 
   val buildInfoSettings = Seq(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, "sparkVersion" -> sparkVersion),
@@ -90,7 +90,7 @@ object Common {
 
   private lazy val sparkVersion = {
     val sparkEnvironmentVariable = "APACHE_SPARK_VERSION"
-    val defaultSparkVersion = "1.6.1"
+    val defaultSparkVersion = "1.6.0-cdh5.10.0"
 
     val _sparkVersion = Properties.envOrNone(sparkEnvironmentVariable)
 
@@ -135,6 +135,8 @@ object Common {
     scalaVersion := buildScalaVersion,
     isSnapshot := snapshot,
     resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
+    resolvers += "Cloudera repository" at "https://repository.cloudera.com/content/repositories/releases/",
+    resolvers += "Spring Plugins repository" at "http://repo.spring.io/plugins-release/",
     // Test dependencies
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "2.2.6" % "test", // Apache v2

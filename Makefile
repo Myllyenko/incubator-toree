@@ -35,7 +35,7 @@ SNAPSHOT:=-SNAPSHOT
 endif
 SBT=sbt/sbt
 
-APACHE_SPARK_VERSION?=1.6.1
+APACHE_SPARK_VERSION?=1.6.0
 IMAGE?=jupyter/pyspark-notebook:8dfd60b729bf
 EXAMPLE_IMAGE?=apache/toree-examples
 GPG?=$(shell which gpg)

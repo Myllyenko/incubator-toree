@@ -21,6 +21,8 @@ resolvers += Classpaths.sbtPluginReleases
 
 resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
+resolvers += "Apache Snapshots" at "http://repository.apache.org/snapshots/"
+
 // Provides the ability to create an IntelliJ project using `sbt gen-idea`
 addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")
 

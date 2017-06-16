@@ -24,6 +24,7 @@ import org.apache.toree.interpreter.Results.Result
 import org.apache.toree.interpreter._
 import org.apache.toree.utils.TaskManager
 import org.apache.spark.SparkConf
+import org.apache.toree.kernel.interpreter.scala._
 import org.apache.spark.repl.SparkIMain
 import org.mockito.Matchers._
 import org.mockito.Mockito._
@@ -275,59 +276,59 @@ class ScalaInterpreterSpec extends FunSpec
       // TODO: Figure out how to trigger sparkIMain.beQuietDuring { ... }
     }
 
-    describe("#classServerUri") {
-      it("should fail a require if the interpreter is not started") {
-        intercept[IllegalArgumentException] {
-          interpreter.classServerURI
-        }
-      }
+//    describe("#classServerUri") {
+//      it("should fail a require if the interpreter is not started") {
+//        intercept[IllegalArgumentException] {
+//          interpreter.classServerURI
+//        }
+//      }
 
-      // TODO: Find better way to test this
-      it("should invoke the underlying SparkIMain implementation") {
+//       TODO: Find better way to test this
+//      it("should invoke the underlying SparkIMain implementation") {
         // Using hack to access private class
-        val securityManagerClass =
-          java.lang.Class.forName("org.apache.spark.SecurityManager")
-        val httpServerClass =
-          java.lang.Class.forName("org.apache.spark.HttpServer")
-        val httpServerConstructor = httpServerClass.getDeclaredConstructor(
-          classOf[SparkConf], classOf[File], securityManagerClass, classOf[Int],
-          classOf[String])
-        val httpServer = httpServerConstructor.newInstance(
-          null, null, null, 0: java.lang.Integer, "")
+//        val securityManagerClass =
+//          java.lang.Class.forName("org.apache.spark.SecurityManager")
+//        val httpServerClass =
+//          java.lang.Class.forName("org.apache.spark.HttpServer")
+//        val httpServerConstructor = httpServerClass.getDeclaredConstructor(
+//          classOf[SparkConf], classOf[File], securityManagerClass, classOf[Int],
+//          classOf[String])
+//        val httpServer = httpServerConstructor.newInstance(
+//          null, null, null, 0: java.lang.Integer, "")
+//
+//        // Return the server instance (cannot mock a private class)
+//        // NOTE: Can mock the class through reflection, but cannot verify
+//        //       a method was called on it since treated as type Any
+//        //val mockHttpServer = org.mockito.Mockito.mock(httpServerClass)
+//        doAnswer(new Answer[String] {
+//          override def answer(invocation: InvocationOnMock): String = {
+//            val exceptionClass =
+//              java.lang.Class.forName("org.apache.spark.ServerStateException")
+//            val exception = exceptionClass
+//              .getConstructor(classOf[String])
+//              .newInstance("")
+//              .asInstanceOf[Exception]
+//            throw exception
+//          }
+//        }
+//        ).when(mockSparkIMain)
 
-        // Return the server instance (cannot mock a private class)
-        // NOTE: Can mock the class through reflection, but cannot verify
-        //       a method was called on it since treated as type Any
-        //val mockHttpServer = org.mockito.Mockito.mock(httpServerClass)
-        doAnswer(new Answer[String] {
-          override def answer(invocation: InvocationOnMock): String = {
-            val exceptionClass =
-              java.lang.Class.forName("org.apache.spark.ServerStateException")
-            val exception = exceptionClass
-              .getConstructor(classOf[String])
-              .newInstance("")
-              .asInstanceOf[Exception]
-            throw exception
-          }
-        }
-        ).when(mockSparkIMain).classServerUri
-
-        interpreterNoPrintStreams.start()
+//        interpreterNoPrintStreams.start()
 
         // Not going to dig so deeply that we actually start a web server for
         // this to work... just throwing this specific exception proves that
         // we have called the uri method of the server
-        try {
-          interpreterNoPrintStreams.classServerURI
-          fail()
-        } catch {
-          // Have to catch this way because... of course... the exception is
-          // also private
-          case ex: Throwable  =>
-            ex.getClass.getName should be ("org.apache.spark.ServerStateException")
-        }
-      }
-    }
+//        try {
+//          interpreterNoPrintStreams.classServerURI
+//          fail()
+//        } catch {
+//          // Have to catch this way because... of course... the exception is
+//          // also private
+//          case ex: Throwable  =>
+//            ex.getClass.getName should be ("org.apache.spark.ServerStateException")
+//        }
+//      }
+//    }
 
     describe("#read") {
       it("should fail a require if the interpreter is not started") {

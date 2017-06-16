@@ -41,14 +41,14 @@ libraryDependencies += "org.apache.commons" % "commons-exec" % "1.3"
 //
 // CLI DEPENDENCIES
 //
-libraryDependencies += "net.sf.jopt-simple" % "jopt-simple" % "4.6" // MIT
+libraryDependencies += "net.sf.jopt-simple" % "jopt-simple" % "4.9" % "provided" // MIT
 
 //
 // MAGIC DEPENDENCIES
 //
 libraryDependencies ++= Seq(
   // Used to find and download jars from Maven-based repositories
-  "org.apache.ivy" % "ivy" % "2.4.0-rc1", // Apache v2
+  "org.apache.ivy" % "ivy" % "2.0.0-rc2" % "provided", // Apache v2
   "io.get-coursier" %% "coursier" % "1.0.0-M12", // Apache v2
   "io.get-coursier" %% "coursier-cache" % "1.0.0-M12" // Apache v2
 )

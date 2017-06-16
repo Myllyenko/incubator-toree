@@ -26,7 +26,8 @@ RUN curl -sL https://deb.nodesource.com/setup_0.12 | bash - && \
     npm install -g bower
 
 # for pyspark demos
-ENV APACHE_SPARK_VERSION 1.6.1
+ENV APACHE_SPARK_VERSION 1.6.0
+
 RUN apt-get -y update && \
     apt-get install -y --no-install-recommends openjdk-7-jre-headless && \
     apt-get clean

@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   // BSD 3-clause license, used for detecting plugins
   "org.clapper" %% "classutil" % "1.0.3",
-  "org.slf4j" % "slf4j-api" % "1.7.21" // MIT
+  "org.slf4j" % "slf4j-api" % "1.7.5" % "provided" // MIT
 )
 
 // Test dependencies

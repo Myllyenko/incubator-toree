@@ -17,7 +17,7 @@
 
 language: scala
 scala:
-    - "2.10.4"
+    - "2.10.5"
 env:
     global:
         - COURSIER_NO_TERM=1

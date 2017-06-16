@@ -89,8 +89,7 @@ class Kernel (
     new DynamicVariable[KernelMessage](null)
 
   private var _sparkContext:SparkContext = null;
-  private var _sparkConf:SparkConf = null;
-  private var _javaSparkContext:JavaSparkContext = null;
+  def _javaSparkContext: JavaSparkContext = new JavaSparkContext(_sparkContext)
   private var _sqlContext:SQLContext = null;
 
   /**
@@ -345,16 +344,15 @@ class Kernel (
   }
 
   override def createSparkContext(conf: SparkConf): SparkContext = {
-    _sparkConf = createSparkConf(conf)
+    val sconf = createSparkConf(conf)
     _sparkContext = initializeSparkContext(sparkConf)
-    _javaSparkContext = new JavaSparkContext(_sparkContext)
     _sqlContext = initializeSqlContext(_sparkContext)
 
-    val sparkMaster = _sparkConf.getOption("spark.master").getOrElse("not_set")
+    val sparkMaster = sconf.getOption("spark.master").getOrElse("not_set")
     logger.info( s"Connecting to spark.master $sparkMaster")
 
     // TODO: Convert to events
-    pluginManager.dependencyManager.add(_sparkConf)
+    pluginManager.dependencyManager.add(sconf)
     pluginManager.dependencyManager.add(_sparkContext)
     pluginManager.dependencyManager.add(_javaSparkContext)
     pluginManager.dependencyManager.add(_sqlContext)
@@ -433,7 +431,7 @@ class Kernel (
   }
 
   override def sparkContext: SparkContext = _sparkContext
-  override def sparkConf: SparkConf = _sparkConf
+  override def sparkConf: SparkConf = sparkContext.getConf
   override def javaSparkContext: JavaSparkContext = _javaSparkContext
   override def sqlContext: SQLContext = _sqlContext
 }

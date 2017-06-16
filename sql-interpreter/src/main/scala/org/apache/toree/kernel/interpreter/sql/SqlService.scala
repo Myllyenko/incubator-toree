@@ -22,7 +22,7 @@ import org.apache.toree.interpreter.broker.BrokerService
 import org.apache.toree.kernel.api.KernelLike
 import org.apache.toree.kernel.interpreter.sql.SqlTypes._
 
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import scala.tools.nsc.interpreter._
 
 /**
@@ -45,7 +45,7 @@ class SqlService(private val kernel: KernelLike) extends BrokerService {
    *
    * @return The result as a future to eventually return
    */
-  override def submitCode(code: Code, kernelOutputStream: Option[OutputStream]): Future[CodeResults] = future {
+  override def submitCode(code: Code, kernelOutputStream: Option[OutputStream]): Future[CodeResults] = Future {
     println(s"Executing: '${code.trim}'")
     val result = kernel.sqlContext.sql(code.trim)
 

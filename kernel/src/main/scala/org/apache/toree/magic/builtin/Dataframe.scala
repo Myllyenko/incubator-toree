@@ -94,7 +94,7 @@ class DataFrame extends CellMagic with IncludeKernelInterpreter
         val rddVarName = kernelInterpreter.lastExecutionVariableName.get
         kernelInterpreter.read(rddVarName).map(variableVal => {
           _dataFrameConverter.convert(
-            variableVal.asInstanceOf[org.apache.spark.sql.DataFrame],
+            variableVal.asInstanceOf[org.apache.spark.sql.Dataset[org.apache.spark.sql.Row]],
             outputType,
             limit
           ).map(output =>

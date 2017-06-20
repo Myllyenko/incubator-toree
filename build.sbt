@@ -105,3 +105,17 @@ lazy val kernel = ToreeProject("kernel", doFork=true, needsSpark=true).dependsOn
   sparkrInterpreter % "test->test;compile->compile",
   sqlInterpreter % "test->test;compile->compile"
 )
+
+assemblyExcludedJars in assembly := {
+  val cp = (fullClasspath in assembly).value
+  val excludesJar = Set(
+    "asm-3.2.jar",
+    "asm-commons-3.1.jar",
+    "asm-tree-3.1.jar",
+    "joda-time-1.6.jar",
+    "jline-2.11.jar",
+    "slf4j-api-1.7.5.jar",
+    "commons-logging-1.1.3.jar"
+  )
+  cp filter { jar => excludesJar.contains(jar.data.getName)}
+}

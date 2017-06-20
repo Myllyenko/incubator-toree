@@ -144,6 +144,13 @@ object Common {
       // use the same jackson version in test than the one provided at runtime by Spark 2.0.0
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5" % "test" // Apache v2
     ),
+	dependencyOverrides += "asm" % "asm" % "3.2" % "provided",
+    dependencyOverrides += "asm" % "asm-commons" % "3.1" % "provided",
+    dependencyOverrides += "asm" % "asm-tree" % "3.1" % "provided",
+    dependencyOverrides += "joda-time" % "joda-time" % "1.6" % "provided",
+    dependencyOverrides += "jline" % "jline" % "2.11" % "provided",
+    dependencyOverrides += "org.slf4j" % "slf4j-api" % "1.7.5" % "provided",
+    dependencyOverrides += "commons-logging" % "commons-logging" % "1.1.3" % "provided",
     ScoverageSbtPlugin.ScoverageKeys.coverageHighlighting := false,
     pomExtra :=
       <parent>

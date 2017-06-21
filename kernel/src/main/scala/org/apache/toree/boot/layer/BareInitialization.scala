@@ -27,7 +27,7 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.content.{CommClose, CommMsg, CommOpen}
 import org.apache.toree.kernel.protocol.v5.relay.KernelMessageRelay
 import org.apache.toree.utils.LogLike
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import play.api.libs.json.Json
 
 /**
@@ -68,7 +68,7 @@ trait StandardBareInitialization extends BareInitialization { this: LogLike =>
 
   protected def createActorSystem(actorSystemName: String): ActorSystem = {
     logger.info("Initializing internal actor system")
-    ActorSystem(actorSystemName)
+    ActorSystem(actorSystemName, ConfigFactory.load("akka_2_3_15_shade_reference"))
   }
 
   protected def createActorLoader(actorSystem: ActorSystem): ActorLoader = {

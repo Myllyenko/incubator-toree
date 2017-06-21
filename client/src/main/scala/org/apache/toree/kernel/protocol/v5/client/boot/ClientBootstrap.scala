@@ -23,7 +23,7 @@ import org.apache.toree.kernel.protocol.v5.client.boot.layers._
 import org.apache.toree.kernel.protocol.v5.client.socket.{SocketConfig, SocketFactory}
 import org.apache.toree.kernel.protocol.v5.client.{SimpleActorLoader, SparkKernelClient}
 import org.apache.toree.utils.LogLike
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import org.zeromq.ZMQ
 
 object ClientBootstrap {
@@ -48,7 +48,7 @@ class ClientBootstrap(config: Config) extends LogLike {
     actorSystemName: String = ClientBootstrap.newActorSystemName()
   ): SparkKernelClient = {
     logger.trace(s"Creating new kernel client actor system, '$actorSystemName'")
-    val actorSystem = ActorSystem(actorSystemName)
+    val actorSystem = ActorSystem(actorSystemName, ConfigFactory.load("akka_2_3_15_shade_reference"))
 
     logger.trace(s"Creating actor loader for actor system, '$actorSystemName'")
     val actorLoader = SimpleActorLoader(actorSystem)

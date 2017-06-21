@@ -119,3 +119,9 @@ assemblyExcludedJars in assembly := {
   )
   cp filter { jar => excludesJar.contains(jar.data.getName)}
 }
+
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("akka.**" -> "akka_2_3_15_shade.@1").inLibrary("com.typesafe.akka" % "akka-actor" % "2.3.15",
+      "com.typesafe.akka" % "akka-slf4j" % "2.3.15").inAll,
+  ShadeRule.rename("com.typesafe.config.**" -> "config_1_2_1_shade.@1").inLibrary("com.typesafe" % "config" % "1.2.1").inAll
+)

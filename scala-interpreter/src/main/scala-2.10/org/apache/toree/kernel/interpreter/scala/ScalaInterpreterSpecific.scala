@@ -51,10 +51,10 @@ trait ScalaInterpreterSpecific { this: ScalaInterpreter =>
   var sparkIMain: SparkIMain = _
   protected var jLineCompleter: SparkJLineCompletion = _
 
-  val _runtimeClassloader =
+/*  val _runtimeClassloader =
     new URLClassLoader(Array(), _thisClassloader) {
       def addJar(url: URL) = this.addURL(url)
-    }
+    }*/
 
   protected def newSparkIMain(
     settings: Settings, out: JPrintWriter
@@ -110,7 +110,7 @@ trait ScalaInterpreterSpecific { this: ScalaInterpreter =>
     ) ++ convertScopeToModifiers(termSymbol)
   }
 
-  protected def refreshDefinitions(): Unit = {
+/*  protected def refreshDefinitions(): Unit = {
     sparkIMain.definedTerms.foreach(termName => {
       val termNameString = termName.toString
       val termTypeString = sparkIMain.typeOfTerm(termNameString).toLongString
@@ -128,7 +128,7 @@ trait ScalaInterpreterSpecific { this: ScalaInterpreter =>
           logger.debug(s"Ignoring rebinding of $termNameString")
       }
     })
-  }
+  }*/
 
   protected def reinitializeSymbols(): Unit = {
     val global = sparkIMain.global

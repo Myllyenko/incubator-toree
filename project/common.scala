@@ -142,7 +142,7 @@ object Common {
       "org.scalatest" %% "scalatest" % "2.2.6" % "test", // Apache v2
       "org.mockito" % "mockito-all" % "1.10.19" % "test",   // MIT
       // use the same jackson version in test than the one provided at runtime by Spark 2.0.0
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5" % "test" // Apache v2
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.2.3" % "test" // Apache v2
     ),
 	dependencyOverrides += "asm" % "asm" % "3.2" % "provided",
     dependencyOverrides += "asm" % "asm-commons" % "3.1" % "provided",

@@ -43,10 +43,10 @@ scalacOptions in ThisBuild ++= Seq(
   "-deprecation",
   "-unchecked",
   "-feature",
-//  "-Xfatal-warnings",
+  "-Xfatal-warnings",
   "-language:reflectiveCalls",
-  "-target:jvm-1.6",
-  "-Xlint" // Scala 2.11.x only
+  "-target:jvm-1.6"
+//  "-Xlint" // Scala 2.11.x only
 )
 // Java-based options for compilation (all tasks)
 // NOTE: Providing a blank flag causes failures, only uncomment with options

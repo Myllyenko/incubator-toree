@@ -236,6 +236,14 @@ scalacOptions in (ScalaUnidoc, unidoc) ++= Seq(
 libraryDependencies ++= Dependencies.sparkAll.value
 unmanagedResourceDirectories in Compile += { baseDirectory.value / "dist/toree-legal" }
 
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("org.clapper.classutil.**" -> "shadeclapper.@0").inAll,
+  ShadeRule.rename("org.objectweb.asm.**" -> "shadeasm.@0").inAll,
+  ShadeRule.rename("akka.**" -> "akka_2_3_15_shade.@1").inLibrary("com.typesafe.akka" % "akka-actor" % "2.3.15",
+      "com.typesafe.akka" % "akka-slf4j" % "2.3.15").inAll,
+  ShadeRule.rename("com.typesafe.config.**" -> "config_1_2_1_shade.@1").inLibrary("com.typesafe" % "config" % "1.2.1").inAll
+)
+
 test in assembly := {}
 assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false)
 aggregate in assembly := false
@@ -250,13 +258,3 @@ assemblyExcludedJars in assembly := {
   )
   cp filter { jar => excludesJar.contains(jar.data.getName)}
 }
-
-assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("akka.**" -> "akka_2_3_15_shade.@1").inLibrary("com.typesafe.akka" % "akka-actor" % "2.3.15",
-      "com.typesafe.akka" % "akka-slf4j" % "2.3.15").inAll,
-  ShadeRule.rename("com.typesafe.config.**" -> "config_1_2_1_shade.@1").inLibrary("com.typesafe" % "config" % "1.2.1").inAll,
-  ShadeRule.rename("org.objectweb.asm.**" -> "org.objectweb.asm_5_1_shade.@1").inLibrary("org.ow2.asm" % "asm" % "5.1").inAll,
-  ShadeRule.rename("org.objectweb.asm.**" -> "org.objectweb.asm_5_1_shade.@1").inLibrary("org.ow2.asm" % "asm-commons" % "5.1").inAll,
-  ShadeRule.rename("org.objectweb.asm.**" -> "org.objectweb.asm_5_1_shade.@1").inLibrary("org.ow2.asm" % "asm-tree" % "5.1").inAll,
-  ShadeRule.rename("org.objectweb.asm.**" -> "org.objectweb.asm_5_1_shade.@1").inLibrary("org.ow2.asm" % "asm-util" % "5.1").inAll
-)

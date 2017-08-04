@@ -45,6 +45,7 @@ trait ScalaInterpreterSpecific extends SettingsProducerLike { this: ScalaInterpr
   protected def newIMain(settings: Settings, out: JPrintWriter): IMain = {
     val s = new IMain(settings, out)
     s.initializeSynchronous()
+    System.setProperty("spark.repl.class.outputDir", s.getClassOutputDirectory.getAbsolutePath)
     s
   }
 
@@ -266,19 +267,21 @@ trait ScalaInterpreterSpecific extends SettingsProducerLike { this: ScalaInterpr
     }
   }
 
+  protected def initializeIMain() = {
+    iMain = newIMain(settings, new JPrintWriter(lastResultOut, true))
+  }
+
   /**
    * Starts the interpreter, initializing any internal state.
    * @return A reference to the interpreter
    */
   override def start(): Interpreter = {
-    require(iMain == null && taskManager == null)
+    require(taskManager == null)
 
     taskManager = newTaskManager()
 
     logger.debug("Initializing task manager")
     taskManager.start()
-
-    iMain = newIMain(settings, new JPrintWriter(lastResultOut, true))
 
     //logger.debug("Initializing interpreter")
     //iMain.initializeSynchronous()

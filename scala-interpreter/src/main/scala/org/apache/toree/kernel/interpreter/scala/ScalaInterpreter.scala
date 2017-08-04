@@ -59,6 +59,8 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   settings.classpath.value = buildClasspath(_thisClassloader)
   settings.embeddedDefaults(_runtimeClassloader)
 
+  initializeIMain()
+
   private val maxInterpreterThreads: Int = {
     if(config.hasPath("max_interpreter_threads"))
       config.getInt("max_interpreter_threads")

@@ -234,9 +234,8 @@ unmanagedResourceDirectories in Compile += { baseDirectory.value / "dist/toree-l
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("org.clapper.classutil.**" -> "shadeclapper.@0").inAll,
   ShadeRule.rename("org.objectweb.asm.**" -> "shadeasm.@0").inAll,
-  ShadeRule.rename("akka.**" -> "akka_2_3_15_shade.@1").inLibrary("com.typesafe.akka" % "akka-actor" % "2.3.15",
-      "com.typesafe.akka" % "akka-slf4j" % "2.3.15").inAll,
-  ShadeRule.rename("com.typesafe.config.**" -> "config_1_2_1_shade.@1").inLibrary("com.typesafe" % "config" % "1.2.1").inAll,
+  ShadeRule.rename("akka.**" -> "akka_shade.@1").inAll,
+  ShadeRule.rename("com.typesafe.config.**" -> "config_shade.@1").inAll,
   ShadeRule.rename("org.joda.time.**" -> "org.joda.time_shade.@1").inAll
 )
 

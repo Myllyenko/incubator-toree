@@ -48,7 +48,7 @@ class ClientBootstrap(config: Config) extends LogLike {
     actorSystemName: String = ClientBootstrap.newActorSystemName()
   ): SparkKernelClient = {
     logger.trace(s"Creating new kernel client actor system, '$actorSystemName'")
-    val actorSystem = ActorSystem(actorSystemName, ConfigFactory.load("akka_2_3_15_shade_reference"))
+    val actorSystem = ActorSystem(actorSystemName, ConfigFactory.load("akka_shade_reference"))
 
     logger.trace(s"Creating actor loader for actor system, '$actorSystemName'")
     val actorLoader = SimpleActorLoader(actorSystem)

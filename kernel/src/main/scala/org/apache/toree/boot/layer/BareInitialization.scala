@@ -68,7 +68,7 @@ trait StandardBareInitialization extends BareInitialization { this: LogLike =>
 
   protected def createActorSystem(actorSystemName: String): ActorSystem = {
     logger.info("Initializing internal actor system")
-    ActorSystem(actorSystemName, ConfigFactory.load("akka_2_3_15_shade_reference"))
+    ActorSystem(actorSystemName, ConfigFactory.load("akka_shade_reference"))
   }
 
   protected def createActorLoader(actorSystem: ActorSystem): ActorLoader = {

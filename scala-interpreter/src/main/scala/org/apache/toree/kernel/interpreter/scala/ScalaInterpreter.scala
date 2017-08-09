@@ -154,10 +154,27 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   }
 
   override def interrupt(): Interpreter = {
-    require(sparkIMain != null && taskManager != null)
+    require(taskManager != null)
 
-    // Force dumping of current task (begin processing new tasks)
-    taskManager.restart()
+    // TODO: use SparkContext.setJobGroup to avoid killing all jobs
+    kernel.sparkContext.cancelAllJobs()
+
+    // give the task 100ms to complete before restarting the task manager
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val finishedFuture = Future {
+      while (taskManager.isExecutingTask) {
+        Thread.sleep(10)
+      }
+    }
+
+    try {
+      Await.result(finishedFuture, Duration(100, TimeUnit.MILLISECONDS))
+      // Await returned, no need to interrupt tasks.
+    } catch {
+      case timeout: TimeoutException =>
+        // Force dumping of current task (begin processing new tasks)
+        taskManager.restart()
+    }
 
     this
   }

@@ -32,8 +32,9 @@ object Dependencies {
 
   val config = "com.typesafe" % "config" % "1.2.1" // Apache v2
 
-  val coursier = "io.get-coursier" %% "coursier" % "1.0.0-M15-1" // Apache v2
-  val coursierCache = "io.get-coursier" %% "coursier-cache" % "1.0.0-M15-1" // Apache v2
+  val coursierVersion = "1.0.0-RC10"
+  val coursier = "io.get-coursier" %% "coursier" % coursierVersion // Apache v2
+  val coursierCache = "io.get-coursier" %% "coursier-cache" % coursierVersion // Apache v2
 
   val ivy = "org.apache.ivy" % "ivy" % "2.0.0-rc2" % "provided" // Apache v2
 

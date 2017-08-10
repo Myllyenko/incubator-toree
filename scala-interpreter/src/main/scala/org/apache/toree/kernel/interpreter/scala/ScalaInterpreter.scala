@@ -28,7 +28,7 @@ import org.apache.spark.repl.{SparkIMain, SparkJLineCompletion}
 import org.apache.spark.sql.SQLContext
 import org.apache.toree.interpreter._
 import org.apache.toree.kernel.api.KernelLike
-import org.apache.toree.utils.{SparkUtils, TaskManager}
+import org.apache.toree.utils.TaskManager
 import org.slf4j.LoggerFactory
 import org.apache.toree.kernel.BuildInfo
 import org.apache.toree.kernel.protocol.v5.MIMEType
@@ -369,31 +369,4 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     pygmentsLexer = Some("scala"),
     mimeType = Some("text/x-scala"),
     codemirrorMode = Some("text/x-scala"))
-}
-
-object ScalaInterpreter {
-
-  val NamedResult: Regex = """(\w+):\s+([^=]+)\s+=\s*(.*)""".r
-  val Definition: Regex = """defined\s+(\w+)\s+(.+)""".r
-  val Import: Regex = """import\s+([\w\.,\{\}\s]+)""".r
-
-  /**
-    * Utility method to ensure that a temporary directory for the REPL exists for testing purposes.
-    */
-  def ensureTemporaryFolder(): String = {
-    val outputDir = Option(System.getProperty("spark.repl.class.outputDir")).getOrElse({
-
-      val execUri = System.getenv("SPARK_EXECUTOR_URI")
-      val tmp = System.getProperty("java.io.tmpdir")
-      val rootDir = System.getProperty("spark.repl.classdir", tmp)
-      val outputDir: String = SparkUtils.createTempDir(rootDir).getAbsolutePath
-      System.setProperty("spark.repl.class.outputDir", outputDir)
-      if (execUri != null) {
-        System.setProperty("spark.executor.uri", execUri)
-      }
-      outputDir
-    })
-    outputDir
-  }
-
 }

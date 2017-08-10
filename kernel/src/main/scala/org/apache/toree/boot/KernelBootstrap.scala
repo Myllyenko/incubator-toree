@@ -27,7 +27,6 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.security.KernelSecurityManager
 import org.apache.toree.utils.LogLike
-import org.apache.toree.utils.SparkUtils
 
 import org.apache.spark.repl.Main
 

@@ -30,6 +30,11 @@ script.name <- sub(
 script.basename <- dirname(script.name)
 setwd(script.basename)
 
+# TODO: Use this library instead of the forked SparkR once they either
+#       a) allow us to connect and use an existing Spark Context
+#       b) allow us to have access to the .sparkREnv to do our own work
+#
+#       and provide access in some form to the methods used to access the JVM
 # Add the SparkR library to our list
 .libPaths(c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib"), .libPaths()))
 library(SparkR)

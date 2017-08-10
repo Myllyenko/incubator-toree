@@ -42,16 +42,15 @@ Tests can be run by doing `make test`.
 
 Build & Package
 ===============
-To build and package up Toree, you currently need `docker` installed. Once you do, run
+To build and package up Toree, run
 ```
 make release
 ```
 
-This results in 3 packages.
+This results in 2 packages.
 
-- `./dist/toree-<VERSION>-source-release.tar.gz` is an archive containing the source used to build the binary
 - `./dist/toree-<VERSION>-binary-release.tar.gz` is a simple package that contains JAR and executable
-- `./dist/toree-<VERSION>.tar.gz` is a `pip` installable package that adds Apache Toree as a Jupyter kernel
+- `./dist/toree-<VERSION>.tar.gz` is a `pip` installable package that adds Toree as a Jupyter kernel.
 
 NOTE: `make release` uses `docker`. Please refer to `docker` installation instructions for your system. `USE_VAGRANT` is not supported by this `make` target.
 
@@ -101,24 +100,10 @@ As it stands, we maintain several branches for legacy versions of Spark. The tab
 
 Branch                       | Apache Spark Version
 ---------------------------- | --------------------
-[master][master]             | 1.5.1+
-[branch-0.1.4][branch-0.1.4] | 1.4.1
-[branch-0.1.3][branch-0.1.3] | 1.3.1
+[master][master]             | 2.0
+[0.1.x][0.1.x]               | 1.6+
 
 Please note that for the most part, new features will mainly be added to the `master` branch.
-
-Building a Release for Apache
-=============================
-
-1. Generate the source, binary, and pip distributables via `make release`. Copy the contents
-   to the subversion repository `https://dist.apache.org/repos/dist/dev/incubator/toree`
-   as a new release candidate for the specified version (e.g. 0.1.0).
-
-2. Publish staging jars to be available on Apache via `GPG_PASSWORD=... make publish-jars`.
-   From there, you need to close the open repo to promote to staging. This closing is done
-   via the UI here: https://repository.apache.org/#stagingRepositories
-
-3. Create a vote thread similar to `https://lists.apache.org/thread.html/493874de453d9ccbdbc3aecc2f527dea6af82d657104732d726e07f9@<dev.toree.apache.org>`
 
 Resources
 =========

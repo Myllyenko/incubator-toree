@@ -54,5 +54,4 @@ apache-rat-*.jar
 .example-image
 .ensime
 .ensime_cache/
-sbt/*.jar
-
+.system-test-image

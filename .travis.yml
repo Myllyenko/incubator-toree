@@ -45,5 +45,5 @@ cache:
 
 branches:
     only:
-        - 0.1.x
+        - spark-1.6.0-cdh5.10.0
 

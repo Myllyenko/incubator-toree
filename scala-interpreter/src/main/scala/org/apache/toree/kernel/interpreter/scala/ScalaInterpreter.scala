@@ -17,7 +17,7 @@
 
 package org.apache.toree.kernel.interpreter.scala
 
-import java.io.{ByteArrayOutputStream, PrintStream}
+import java.io.ByteArrayOutputStream
 import java.net.{URL, URLClassLoader}
 import java.nio.charset.Charset
 import java.util.concurrent.{ExecutionException, TimeoutException, TimeUnit}
@@ -35,13 +35,12 @@ import org.apache.toree.kernel.protocol.v5.MIMEType
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.language.reflectiveCalls
-import scala.tools.nsc.interpreter.{IR, JPrintWriter, OutputStream}
+import scala.tools.nsc.Settings
+import scala.tools.nsc.interpreter.{IR, OutputStream}
 import scala.tools.nsc.util.ClassPath
-import scala.tools.nsc.{Settings, io}
-import scala.util.{Try => UtilTry}
 import scala.util.matching.Regex
+import scala.concurrent.duration.Duration
 
 class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends Interpreter with ScalaInterpreterSpecific {
   import ScalaInterpreter._
@@ -62,13 +61,19 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     }
   protected val lastResultOut = new ByteArrayOutputStream()
 
-
   private[scala] var taskManager: TaskManager = _
 
-  protected var settings: Settings = newSettings(interpreterArgs())
+  /** Since the ScalaInterpreter can be started without a kernel, we need to ensure that we can compile things.
+      Adding in the default classpaths as needed.
+    */
+  def appendClassPath(settings: Settings): Settings = {
+    settings.classpath.value = buildClasspath(_thisClassloader)
+    settings.embeddedDefaults(_runtimeClassloader)
+    settings
+  }
 
-  settings.classpath.value = buildClasspath(_thisClassloader)
-  settings.embeddedDefaults(_runtimeClassloader)
+  protected var settings: Settings = newSettings(interpreterArgs())
+  settings = appendClassPath(settings)
 
   initializeIMain()
 
@@ -82,35 +87,11 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
   protected def newTaskManager(): TaskManager =
     new TaskManager(maximumWorkers = maxInterpreterThreads)
 
-  protected def refreshDefinitions(): Unit = {
-
-    /*
-     * Refreshing values, avoids refreshing any defs
-     */
-    sparkIMain.definedTerms.map(_.toString).filterNot(sparkIMain.symbolOfTerm(_).isSourceMethod).foreach(termName => {
-      val termTypeString = sparkIMain.typeOfTerm(termName).toLongString
-      sparkIMain.valueOfTerm(termName) match {
-        case Some(termValue)  =>
-          val modifiers = buildModifierList(termName)
-          logger.debug(s"Rebinding of $termName as " +
-            s"${modifiers.mkString(" ")} $termTypeString")
-          UtilTry(sparkIMain.beSilentDuring {
-            sparkIMain.bind(
-              termName, termTypeString, termValue, modifiers
-            )
-          })
-        case None             =>
-          logger.debug(s"Ignoring rebinding of $termName")
-      }
-    })
-
-    /*
-     * Need to rebind the defs for sc and sqlContext
-     */
-    bindSparkContext()
-    bindSqlContext()
-  }
-
+  /**
+   * This has to be called first to initialize all the settings.
+   *
+   * @return The newly initialized interpreter
+   */
   override def init(kernel: KernelLike): Interpreter = {
     this._kernel = kernel
     start()
@@ -150,8 +131,20 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     config.getStringList("interpreter_args").asScala.toList
   }
 
+   protected def maxInterpreterThreads(kernel: KernelLike): Int = {
+     kernel.config.getInt("max_interpreter_threads")
+   }
+
   protected def bindKernelVariable(kernel: KernelLike): Unit = {
+    logger.warn(s"kernel variable: ${kernel}")
+//    InterpreterHelper.kernelLike = kernel
+//    interpret("import org.apache.toree.kernel.interpreter.scala.InterpreterHelper")
+//    interpret("import org.apache.toree.kernel.api.Kernel")
+//
+//    interpret(s"val kernel = InterpreterHelper.kernelLike.asInstanceOf[org.apache.toree.kernel.api.Kernel]")
+
     doQuietly {
+
       bind(
         "kernel", "org.apache.toree.kernel.api.Kernel",
         kernel, List( """@transient implicit""")
@@ -318,14 +311,14 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
       //       inside the interpreter)
       logger.debug("Initializing Spark cluster in interpreter")
 
-      doQuietly {
-        interpret(Seq(
-          "val $toBeNulled = {",
-          "  var $toBeNulled = sc.emptyRDD.collect()",
-          "  $toBeNulled = null",
-          "}"
-        ).mkString("\n").trim())
-      }
+//      doQuietly {
+//        interpret(Seq(
+//          "val $toBeNulled = {",
+//          "  var $toBeNulled = sc.emptyRDD.collect()",
+//          "  $toBeNulled = null",
+//          "}"
+//        ).mkString("\n").trim())
+//      }
     }
   }
 
@@ -369,4 +362,11 @@ class ScalaInterpreter(private val config:Config = ConfigFactory.load) extends I
     pygmentsLexer = Some("scala"),
     mimeType = Some("text/x-scala"),
     codemirrorMode = Some("text/x-scala"))
+}
+
+object ScalaInterpreter {
+
+  val NamedResult: Regex = """(\w+):\s+([^=]+)\s+=\s*(.*)""".r
+  val Definition: Regex = """defined\s+(\w+)\s+(.+)""".r
+  val Import: Regex = """import\s+([\w\.,\{\}\s]+)""".r
 }

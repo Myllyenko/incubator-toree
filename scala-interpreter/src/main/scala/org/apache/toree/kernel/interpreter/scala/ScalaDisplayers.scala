@@ -18,17 +18,14 @@
 package org.apache.toree.kernel.interpreter.scala
 
 import java.util
-
+import jupyter.{Displayer, Displayers, MIMETypes}
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.Row
+import org.apache.toree.kernel.protocol.v5.MIMEType
+import org.apache.toree.magic.MagicOutput
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.Row
-import jupyter.Displayer
-import jupyter.Displayers
-import jupyter.MIMETypes
-import org.apache.toree.kernel.protocol.v5.MIMEType
-import org.apache.toree.magic.MagicOutput
 
 object ScalaDisplayers {
 
@@ -114,7 +111,7 @@ object ScalaDisplayers {
 
     private def callToHTML(obj: Any): Option[String] = {
       import scala.reflect.runtime.{universe => ru}
-      val toHtmlMethodName = ru.newTermName("toHtml")
+      val toHtmlMethodName = ScalaDisplayersSpecific.getTermName("toHtml")
       val classMirror = ru.runtimeMirror(obj.getClass.getClassLoader)
       val objMirror = classMirror.reflect(obj)
       val toHtmlSym = objMirror.symbol.toType.member(toHtmlMethodName)

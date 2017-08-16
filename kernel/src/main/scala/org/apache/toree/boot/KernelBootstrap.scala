@@ -27,16 +27,12 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.security.KernelSecurityManager
 import org.apache.toree.utils.LogLike
-
-import org.apache.spark.repl.Main
-
 import org.zeromq.ZMQ
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class KernelBootstrap(config: Config) extends LogLike {
+class KernelBootstrap(config: Config) extends LogLike with KernelBootstrapSpecific {
   this: BareInitialization with ComponentInitialization
     with HandlerInitialization with HookInitialization =>
 
@@ -53,7 +49,7 @@ class KernelBootstrap(config: Config) extends LogLike {
   /**
    * Initializes all kernel systems.
    */
-  def initialize() = {
+  override def initialize() = {
     // TODO: Investigate potential to initialize System out/err/in to capture
     //       Console DynamicVariable initialization (since takes System fields)
     //       and redirect it to a workable location (like an actor) with the

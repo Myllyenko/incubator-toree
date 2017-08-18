@@ -13,5 +13,7 @@ private[boot] trait KernelBootstrapSpecific {
     */
   def initialize() = {
     System.setProperty("spark.repl.class.outputDir", outputDir.getAbsolutePath)
+
+    this
   }
 }

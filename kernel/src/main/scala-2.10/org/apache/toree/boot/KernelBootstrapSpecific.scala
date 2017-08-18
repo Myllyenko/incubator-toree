@@ -8,5 +8,6 @@ private[boot] trait KernelBootstrapSpecific {
     * Initializes all kernel systems.
     */
   def initialize() = {
+    this
   }
 }

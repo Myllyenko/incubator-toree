@@ -16,6 +16,8 @@
  */
 package org.apache.toree.plugins.dependencies
 
+import org.apache.toree.ReflectionAccessor
+
 import scala.reflect.runtime.universe.{Type, TypeTag}
 
 /**
@@ -42,9 +44,11 @@ case class Dependency[T <: AnyRef](
    * @return The Java class instance
    */
   def typeClass(classLoader: ClassLoader): Class[_] = {
-    import scala.reflect.runtime.universe._
-    val m = runtimeMirror(classLoader)
-    m.runtimeClass(`type`.typeSymbol.asClass)
+    ReflectionAccessor.useReflection {
+      import scala.reflect.runtime.universe._
+      val m = runtimeMirror(classLoader)
+      m.runtimeClass(`type`.typeSymbol.asClass)
+    }
   }
 
   /** Represents the class for the dependency's value. */

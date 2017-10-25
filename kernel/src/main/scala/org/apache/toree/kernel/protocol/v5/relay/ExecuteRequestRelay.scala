@@ -18,9 +18,11 @@
 package org.apache.toree.kernel.protocol.v5.relay
 
 import java.io.OutputStream
+
 import akka.actor.Actor
 import akka.pattern._
 import akka.util.Timeout
+import org.apache.toree.ReflectionAccessor
 import org.apache.toree.interpreter.{ExecuteAborted, ExecuteError, ExecuteFailure, ExecuteOutput}
 import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.content._
@@ -28,6 +30,7 @@ import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.kernel.protocol.v5.magic.MagicParser
 import org.apache.toree.plugins.PluginManager
 import org.apache.toree.utils.LogLike
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import org.apache.toree.plugins.NewOutputStream
@@ -95,11 +98,13 @@ case class ExecuteRequestRelay(
       val oldSender = sender()
 
       // Sets the outputStream for this particular ExecuteRequest
-      import org.apache.toree.plugins.Implicits._
-      pluginManager.fireEventFirstResult(
-        NewOutputStream,
-        "outputStream" -> outputStream
-      )
+      ReflectionAccessor.useReflection {
+        import org.apache.toree.plugins.Implicits._
+        pluginManager.fireEventFirstResult(
+          NewOutputStream,
+          "outputStream" -> outputStream
+        )
+      }
 
       // Parse the code for magics before sending it to the interpreter and
       // pipe the response to sender

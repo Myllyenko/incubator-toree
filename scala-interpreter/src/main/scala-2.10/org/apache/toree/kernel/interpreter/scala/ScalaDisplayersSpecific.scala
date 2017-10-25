@@ -1,5 +1,7 @@
 package org.apache.toree.kernel.interpreter.scala
 
+import org.apache.toree.ReflectionAccessor
+
 import scala.reflect.runtime.universe
 
 /**
@@ -14,6 +16,8 @@ private[scala] object ScalaDisplayersSpecific {
     * @return the term name
     */
   private[scala] def getTermName(name: String) = {
-    universe.newTermName(name)
+    ReflectionAccessor.useReflection {
+      universe.newTermName(name)
+    }
   }
 }

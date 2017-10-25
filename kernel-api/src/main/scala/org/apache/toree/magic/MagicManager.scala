@@ -17,13 +17,14 @@
 
 package org.apache.toree.magic
 
-import org.apache.toree.plugins.{Plugin, PluginMethodResult, PluginManager}
+import org.apache.toree.ReflectionAccessor
+import org.apache.toree.plugins.{Plugin, PluginManager, PluginMethodResult}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.language.dynamics
 import scala.runtime.BoxedUnit
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class MagicManager(private val pluginManager: PluginManager) extends Dynamic {
   protected val logger = LoggerFactory.getLogger(this.getClass.getName)
@@ -78,15 +79,17 @@ class MagicManager(private val pluginManager: PluginManager) extends Dynamic {
   def applyDynamic(name: String)(args: Any*): MagicOutput = {
     val arg = args.headOption.map(_.toString).getOrElse("")
 
-    import org.apache.toree.plugins.Implicits._
-    val result = pluginManager.fireEventFirstResult(
-      name.toLowerCase(),
-      "input" -> arg
-    )
+    ReflectionAccessor.useReflection {
+      import org.apache.toree.plugins.Implicits._
+      val result = pluginManager.fireEventFirstResult(
+        name.toLowerCase(),
+        "input" -> arg
+      )
 
-    result match {
-      case Some(r: PluginMethodResult) => handleMagicResult(name, r.toTry)
-      case None => throw new MagicNotFoundException(name)
+      result match {
+        case Some(r: PluginMethodResult) => handleMagicResult(name, r.toTry)
+        case None => throw new MagicNotFoundException(name)
+      }
     }
   }
 

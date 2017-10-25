@@ -17,7 +17,6 @@
 package org.apache.toree.plugins
 
 import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.toree.annotations.Internal
 

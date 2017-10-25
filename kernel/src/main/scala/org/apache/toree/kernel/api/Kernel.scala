@@ -20,6 +20,7 @@ package org.apache.toree.kernel.api
 import java.io.{InputStream, PrintStream}
 import java.net.URI
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit, TimeoutException}
+
 import scala.collection.mutable
 import com.typesafe.config.Config
 import org.apache.spark.api.java.JavaSparkContext
@@ -28,7 +29,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.toree.annotations.Experimental
 import org.apache.toree.boot.layer.InterpreterManager
 import org.apache.toree.comm.CommManager
-import org.apache.toree.global
+import org.apache.toree.{ReflectionAccessor, global}
 import org.apache.toree.global.ExecuteRequestState
 import org.apache.toree.interpreter.Results.Result
 import org.apache.toree.interpreter._
@@ -40,11 +41,12 @@ import org.apache.toree.kernel.protocol.v5.{KMBuilder, KernelMessage, MIMEType}
 import org.apache.toree.magic.MagicManager
 import org.apache.toree.plugins.PluginManager
 import org.apache.toree.utils.LogLike
+
 import scala.language.dynamics
 import scala.reflect.runtime.universe._
 import scala.util.DynamicVariable
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
 
 /**
  * Represents the main kernel API to be used for interaction.
@@ -254,12 +256,14 @@ class Kernel (
   override def out: PrintStream = {
     val kernelMessage = lastKernelMessage()
 
-    constructStream(currentOutputStream, currentOutputKernelMessage, kernelMessage, { kernelMessage =>
-      val outputStream = this.factory(parentMessage = kernelMessage)
-        .newKernelOutputStream("stdout")
+    ReflectionAccessor.useReflection {
+      constructStream(currentOutputStream, currentOutputKernelMessage, kernelMessage, { kernelMessage =>
+        val outputStream = this.factory(parentMessage = kernelMessage)
+          .newKernelOutputStream("stdout")
 
-      new PrintStream(outputStream)
-    })
+        new PrintStream(outputStream)
+      })
+    }
   }
 
   /**
@@ -272,12 +276,14 @@ class Kernel (
   override def err: PrintStream = {
     val kernelMessage = lastKernelMessage()
 
-    constructStream(currentErrorStream, currentErrorKernelMessage, kernelMessage, { kernelMessage =>
-      val outputStream = this.factory(parentMessage = kernelMessage)
-        .newKernelOutputStream("stderr")
+    ReflectionAccessor.useReflection {
+      constructStream(currentErrorStream, currentErrorKernelMessage, kernelMessage, { kernelMessage =>
+        val outputStream = this.factory(parentMessage = kernelMessage)
+          .newKernelOutputStream("stderr")
 
-      new PrintStream(outputStream)
-    })
+        new PrintStream(outputStream)
+      })
+    }
   }
 
   /**
@@ -289,9 +295,11 @@ class Kernel (
   override def in: InputStream = {
     val kernelMessage = lastKernelMessage()
 
-    constructStream(currentInputStream, currentInputKernelMessage, kernelMessage, { kernelMessage =>
-      this.factory(parentMessage = kernelMessage).newKernelInputStream()
-    })
+    ReflectionAccessor.useReflection {
+      constructStream(currentInputStream, currentInputKernelMessage, kernelMessage, { kernelMessage =>
+        this.factory(parentMessage = kernelMessage).newKernelInputStream()
+      })
+    }
   }
 
   /**

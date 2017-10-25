@@ -25,11 +25,12 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.content._
 import org.apache.toree.kernel.protocol.v5.kernel.{ActorLoader, Utilities}
 import org.apache.toree.kernel.protocol.v5.stream.KernelOutputStream
-import org.apache.toree.{global => kernelGlobal}
+import org.apache.toree.{ReflectionAccessor, global => kernelGlobal}
 import Utilities._
 import org.apache.toree.utils._
 import play.api.data.validation.ValidationError
 import play.api.libs.json.JsPath
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util.{Failure, Success}
@@ -74,10 +75,12 @@ class ExecuteRequestHandler(
         actorLoader.load(SystemActorType.ExecuteRequestRelay),
         (executeRequest, km, outputStream)
       ).mapTo[(ExecuteReply, ExecuteResult)]
-      
+
       if (!executeRequest.silent && kernel.pluginManager != null){
-        import org.apache.toree.plugins.Implicits._
-        kernel.pluginManager.fireEvent(PreRunCell, "outputStream" -> outputStream)
+        ReflectionAccessor.useReflection {
+          import org.apache.toree.plugins.Implicits._
+          kernel.pluginManager.fireEvent(PreRunCell, "outputStream" -> outputStream)
+        }
       }
 
       // Flush the output stream after code execution completes to ensure

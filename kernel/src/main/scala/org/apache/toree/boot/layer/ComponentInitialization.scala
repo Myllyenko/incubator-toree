@@ -18,21 +18,23 @@
 package org.apache.toree.boot.layer
 
 import java.io.File
-import java.net.URL
 import java.nio.file.{Files, Paths}
 import java.util.concurrent.ConcurrentHashMap
+
 import akka.actor.ActorRef
 import com.typesafe.config.Config
 import org.apache.spark.SparkConf
+import org.apache.toree.ReflectionAccessor
 import org.apache.toree.comm.{CommManager, CommRegistrar, CommStorage, KernelCommManager}
-import org.apache.toree.dependencies.{CoursierDependencyDownloader, Credentials, DependencyDownloader}
+import org.apache.toree.dependencies.{CoursierDependencyDownloader, DependencyDownloader}
 import org.apache.toree.interpreter._
 import org.apache.toree.kernel.api.Kernel
 import org.apache.toree.kernel.protocol.v5.KMBuilder
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.magic.MagicManager
 import org.apache.toree.plugins.PluginManager
-import org.apache.toree.utils.{LogLike, FileUtils}
+import org.apache.toree.utils.{FileUtils, LogLike}
+
 import scala.collection.JavaConverters._
 import org.apache.toree.plugins.AllInterpretersReady
 
@@ -83,7 +85,7 @@ trait StandardComponentInitialization extends ComponentInitialization {
     initializePlugins(config, pluginManager)
 
     interpreterManager.initializeInterpreters(kernel)
-    
+
     pluginManager.fireEvent(AllInterpretersReady)
 
     val responseMap = initializeResponseMap()
@@ -171,7 +173,10 @@ trait StandardComponentInitialization extends ComponentInitialization {
         theConf
       }
     }
-    pluginManager.dependencyManager.add(kernel)
+
+    ReflectionAccessor.useReflection {
+      pluginManager.dependencyManager.add(kernel)
+    }
 
     kernel
   }
@@ -184,11 +189,13 @@ trait StandardComponentInitialization extends ComponentInitialization {
     val pluginManager = new PluginManager()
 
     logger.debug("Building dependency map")
-    pluginManager.dependencyManager.add(interpreterManager.interpreters("Scala"))
-    pluginManager.dependencyManager.add(dependencyDownloader)
-    pluginManager.dependencyManager.add(config)
+    ReflectionAccessor.useReflection {
+      pluginManager.dependencyManager.add(interpreterManager.interpreters("Scala"))
+      pluginManager.dependencyManager.add(dependencyDownloader)
+      pluginManager.dependencyManager.add(config)
 
-    pluginManager.dependencyManager.add(pluginManager)
+      pluginManager.dependencyManager.add(pluginManager)
+    }
 
     pluginManager
   }

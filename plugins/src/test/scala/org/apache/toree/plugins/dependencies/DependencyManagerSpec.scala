@@ -16,7 +16,8 @@
  */
 package org.apache.toree.plugins.dependencies
 
-import org.scalatest.{OneInstancePerTest, Matchers, FunSpec}
+import org.apache.toree.ReflectionAccessor
+import org.scalatest.{FunSpec, Matchers, OneInstancePerTest}
 
 class DependencyManagerSpec extends FunSpec with Matchers with OneInstancePerTest {
   private val dependencyManager = new DependencyManager
@@ -163,15 +164,17 @@ class DependencyManagerSpec extends FunSpec with Matchers with OneInstancePerTes
       }
 
       it("should use the reflective type of the value for the dependency's type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = typeOf[Object]
+          val expected = typeOf[Object]
 
-        dependencyManager.add(new Object)
+          dependencyManager.add(new Object)
 
-        val actual = dependencyManager.toSeq.head.`type`
+          val actual = dependencyManager.toSeq.head.`type`
 
-        actual should be (expected)
+          actual should be (expected)
+        }
       }
 
       it("should add the provided dependency object directly") {
@@ -214,148 +217,168 @@ class DependencyManagerSpec extends FunSpec with Matchers with OneInstancePerTes
 
     describe("#findByType") {
       it("should return a collection including of dependencies with the same type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[Object], new Object),
-          Dependency("id2", typeOf[Object], new Object)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[Object], new Object),
+            Dependency("id2", typeOf[Object], new Object)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByType(typeOf[Object])
+          val actual = dependencyManager.findByType(typeOf[Object])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection including of dependencies with a sub type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new String),
-          Dependency("id2", typeOf[String], new String)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new String),
+            Dependency("id2", typeOf[String], new String)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByType(typeOf[Object])
+          val actual = dependencyManager.findByType(typeOf[Object])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return an empty collection if no dependency has the type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Nil
+          val expected = Nil
 
-        dependencyManager.add(Dependency("id", typeOf[Object], new Object))
-        dependencyManager.add(Dependency("id2", typeOf[Object], new Object))
+          dependencyManager.add(Dependency("id", typeOf[Object], new Object))
+          dependencyManager.add(Dependency("id2", typeOf[Object], new Object))
 
-        val actual = dependencyManager.findByType(typeOf[String])
+          val actual = dependencyManager.findByType(typeOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
     }
 
     describe("#findByTypeClass") {
       it("should return a collection including of dependencies with the same class for the type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[Object], new Object),
-          Dependency("id2", typeOf[Object], new Object)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[Object], new Object),
+            Dependency("id2", typeOf[Object], new Object)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByTypeClass(classOf[Object])
+          val actual = dependencyManager.findByTypeClass(classOf[Object])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection including of dependencies with a sub class for the type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new String),
-          Dependency("id2", typeOf[String], new String)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new String),
+            Dependency("id2", typeOf[String], new String)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByTypeClass(classOf[Object])
+          val actual = dependencyManager.findByTypeClass(classOf[Object])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return an empty collection if no dependency has a matching class for its type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Nil
+          val expected = Nil
 
-        dependencyManager.add(Dependency("id", typeOf[Object], new Object))
-        dependencyManager.add(Dependency("id2", typeOf[Object], new Object))
+          dependencyManager.add(Dependency("id", typeOf[Object], new Object))
+          dependencyManager.add(Dependency("id2", typeOf[Object], new Object))
 
-        val actual = dependencyManager.findByTypeClass(classOf[String])
+          val actual = dependencyManager.findByTypeClass(classOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       ignore("should throw an exception if the dependency's type class is not found in the provided class' classloader") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        intercept[ClassNotFoundException] {
-          // TODO: Find some class that is in a different classloader and
-          //       create a dependency from it
-          dependencyManager.add(Dependency("id", typeOf[Object], new Object))
+          intercept[ClassNotFoundException] {
+            // TODO: Find some class that is in a different classloader and
+            //       create a dependency from it
+            dependencyManager.add(Dependency("id", typeOf[Object], new Object))
 
-          dependencyManager.findByTypeClass(classOf[Object])
+            dependencyManager.findByTypeClass(classOf[Object])
+          }
         }
       }
     }
 
     describe("#findByValueClass") {
       it("should return a collection including of dependencies with the same class for the value") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[AnyVal], new AnyRef),
-          Dependency("id2", typeOf[AnyVal], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[AnyVal], new AnyRef),
+            Dependency("id2", typeOf[AnyVal], new AnyRef)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByValueClass(classOf[AnyRef])
+          val actual = dependencyManager.findByValueClass(classOf[AnyRef])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection including of dependencies with a sub class for the value") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[AnyVal], new String),
-          Dependency("id2", typeOf[AnyVal], new String)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[AnyVal], new String),
+            Dependency("id2", typeOf[AnyVal], new String)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.findByValueClass(classOf[AnyRef])
+          val actual = dependencyManager.findByValueClass(classOf[AnyRef])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return an empty collection if no dependency has a matching class for its value") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Nil
+          val expected = Nil
 
-        dependencyManager.add(Dependency("id", typeOf[String], new Object))
-        dependencyManager.add(Dependency("id2", typeOf[String], new Object))
+          dependencyManager.add(Dependency("id", typeOf[String], new Object))
+          dependencyManager.add(Dependency("id2", typeOf[String], new Object))
 
-        val actual = dependencyManager.findByValueClass(classOf[String])
+          val actual = dependencyManager.findByValueClass(classOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
     }
 
@@ -397,163 +420,181 @@ class DependencyManagerSpec extends FunSpec with Matchers with OneInstancePerTes
 
     describe("#removeByType") {
       it("should remove dependencies with the specified type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[String], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[String], new AnyRef)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByType(typeOf[String])
+          val actual = dependencyManager.removeByType(typeOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should remove dependencies with a type that is a subtype of the specified type") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[String], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[String], new AnyRef)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByType(typeOf[CharSequence])
+          val actual = dependencyManager.removeByType(typeOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection of any removed dependencies") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[CharSequence], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[CharSequence], new AnyRef)
+          )
 
-        val all = Seq(
-          Dependency("id3", typeOf[Integer], new AnyRef),
-          Dependency("id4", typeOf[Boolean], new AnyRef)
-        ) ++ expected
+          val all = Seq(
+            Dependency("id3", typeOf[Integer], new AnyRef),
+            Dependency("id4", typeOf[Boolean], new AnyRef)
+          ) ++ expected
 
-        all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByType(typeOf[CharSequence])
+          val actual = dependencyManager.removeByType(typeOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
     }
 
     describe("#removeByTypeClass") {
       it("should remove dependencies with the specified type class") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[String], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[String], new AnyRef)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByTypeClass(classOf[String])
+          val actual = dependencyManager.removeByTypeClass(classOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should remove dependencies with a type that is a subtype of the specified type class") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[String], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[String], new AnyRef)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByTypeClass(classOf[CharSequence])
+          val actual = dependencyManager.removeByTypeClass(classOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection of any removed dependencies") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[String], new AnyRef),
-          Dependency("id2", typeOf[CharSequence], new AnyRef)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[String], new AnyRef),
+            Dependency("id2", typeOf[CharSequence], new AnyRef)
+          )
 
-        val all = Seq(
-          Dependency("id3", typeOf[Integer], new AnyRef),
-          Dependency("id4", typeOf[Boolean], new AnyRef)
-        ) ++ expected
+          val all = Seq(
+            Dependency("id3", typeOf[Integer], new AnyRef),
+            Dependency("id4", typeOf[Boolean], new AnyRef)
+          ) ++ expected
 
-        all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByTypeClass(classOf[CharSequence])
+          val actual = dependencyManager.removeByTypeClass(classOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
     }
 
     describe("#removeByValueClass") {
       it("should remove dependencies with the specified value class") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[AnyRef], new String),
-          Dependency("id2", typeOf[AnyRef], new String)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[AnyRef], new String),
+            Dependency("id2", typeOf[AnyRef], new String)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByValueClass(classOf[String])
+          val actual = dependencyManager.removeByValueClass(classOf[String])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should remove dependencies with a type that is a subtype of the specified value class") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[AnyRef], new String),
-          Dependency("id2", typeOf[AnyRef], new String)
-        )
+          val expected = Seq(
+            Dependency("id", typeOf[AnyRef], new String),
+            Dependency("id2", typeOf[AnyRef], new String)
+          )
 
-        expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          expected.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByValueClass(classOf[CharSequence])
+          val actual = dependencyManager.removeByValueClass(classOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
 
       it("should return a collection of any removed dependencies") {
-        import scala.reflect.runtime.universe._
+        ReflectionAccessor.useReflection {
+          import scala.reflect.runtime.universe._
 
-        val expected = Seq(
-          Dependency("id", typeOf[AnyRef], new String),
-          Dependency("id2", typeOf[AnyRef], new CharSequence {
-            override def charAt(i: Int): Char = ???
+          val expected = Seq(
+            Dependency("id", typeOf[AnyRef], new String),
+            Dependency("id2", typeOf[AnyRef], new CharSequence {
+              override def charAt(i: Int): Char = ???
 
-            override def length(): Int = ???
+              override def length(): Int = ???
 
-            override def subSequence(i: Int, i1: Int): CharSequence = ???
-          })
-        )
+              override def subSequence(i: Int, i1: Int): CharSequence = ???
+            })
+          )
 
-        val all = Seq(
-          Dependency("id3", typeOf[AnyRef], Int.box(3)),
-          Dependency("id4", typeOf[AnyRef], Boolean.box(true))
-        ) ++ expected
+          val all = Seq(
+            Dependency("id3", typeOf[AnyRef], Int.box(3)),
+            Dependency("id4", typeOf[AnyRef], Boolean.box(true))
+          ) ++ expected
 
-        all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
+          all.foreach(dependencyManager.add(_: Dependency[_ <: AnyRef]))
 
-        val actual = dependencyManager.removeByValueClass(classOf[CharSequence])
+          val actual = dependencyManager.removeByValueClass(classOf[CharSequence])
 
-        actual should contain theSameElementsAs (expected)
+          actual should contain theSameElementsAs (expected)
+        }
       }
     }
   }

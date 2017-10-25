@@ -18,6 +18,7 @@
 package org.apache.toree.utils
 
 import org.apache.spark.sql.{Dataset, Row}
+import org.apache.toree.ReflectionAccessor
 import org.apache.toree.plugins.Plugin
 import play.api.libs.json.{JsObject, Json}
 
@@ -26,7 +27,9 @@ import org.apache.toree.plugins.annotations.Init
 
 class DataFrameConverter extends Plugin with LogLike {
   @Init def init() = {
-    register(this)
+    ReflectionAccessor.useReflection {
+      register(this)
+    }
   }
 
   def convert(

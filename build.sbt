@@ -47,6 +47,15 @@ scalacOptions in ThisBuild ++= Seq(
   "-language:reflectiveCalls",
   "-target:jvm-1.6"
 )
+
+scalacOptions in ThisBuild ++= {
+  if ((scalaVersion in ThisBuild).value.startsWith("2.11")) {
+    Seq("-Xlint")
+  } else {
+    Nil
+  }
+}
+
 // Java-based options for compilation (all tasks)
 // NOTE: Providing a blank flag causes failures, only uncomment with options
 //javacOptions in Compile ++= Seq(""),

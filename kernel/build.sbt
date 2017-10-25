@@ -21,6 +21,6 @@ libraryDependencies += Dependencies.guava
 //
 // TEST DEPENDENCIES
 //
-libraryDependencies += Dependencies.akkaTestkit % "test"
+libraryDependencies += Dependencies.akkaTestkit.value % "test"
 libraryDependencies += Dependencies.joptSimple
 

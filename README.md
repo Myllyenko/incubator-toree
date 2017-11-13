@@ -22,6 +22,13 @@
 [![Join the chat at https://gitter.im/apache/toree][gitter-badge]][gitter-url]
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/apache/incubator-toree)
 
+This fork makes Toree compatible with the following environment:
+* CDH 5.10.2;
+* Spark 1.6.0 from the CDH distribution;
+* Scala 2.10.5.
+
+Compatibility with other environments isn't tested but this version of Toree is likely to be compatible with environments that differs from the target one only in minor versions of the components listed above.
+
 [Apache Toree][website]
 ============
 The main goal of the Toree is to provide the foundation for interactive applications to connect to and use [Apache Spark][1]. This
